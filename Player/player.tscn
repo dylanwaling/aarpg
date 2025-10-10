@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://bf4esf57fcnh8"]
+
+[ext_resource type="Texture2D" uid="uid://c3rcpepy256jw" path="res://Player/Sprites/ExamplePlayerSprite.png" id="1_l8h54"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_edjgo"]
+
+[node name="Player" type="CharacterBody2D"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_edjgo")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -20)
+texture = ExtResource("1_l8h54")
+hframes = 21
