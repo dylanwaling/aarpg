@@ -25,6 +25,10 @@ func _ready():
 	for s in $States.get_children():
 		s.player = self
 
+	# Hide attack effects at startup
+	var attack_fx_sprite = $Sprite2D/AttackFX/AttackEffectsSprite
+	attack_fx_sprite.visible = false
+
 	# Start in Idle mode
 	change_state(IdleState)
 

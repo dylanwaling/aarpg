@@ -27,15 +27,22 @@ func enter(_from):
 	# Play the character attack animation that matches current facing (up/down/side).
 	player.play_anim("attack")
 	
-	# Play the corresponding attack effect animation
-	_play_attack_effects()
+	# Show and play the corresponding attack effect animation
+	_show_and_play_attack_effects()
 
 	# Start the attack timer.
 	_time_left = attack_duration
 
-func _play_attack_effects():
-	# Get reference to the attack effects AnimationPlayer
+func _show_and_play_attack_effects():
+	# Get references to the attack effects nodes
 	var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
+	var attack_fx_sprite = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite")
+	
+	# Make the attack effects visible
+	attack_fx_sprite.visible = true
+	
+	# Sync the effect sprite flip with the character sprite
+	attack_fx_sprite.flip_h = player.sprite.flip_h
 	
 	# Determine which effect animation to play based on facing direction
 	var effect_anim_name := ""
@@ -97,5 +104,10 @@ func physics_update(_delta):
 	pass
 
 func exit(_to):
-	# Nothing to clean up right now. If you enabled a hitbox or trail, disable it here.
-	pass
+	# Hide the attack effects when exiting the attack state
+	var attack_fx_sprite = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite")
+	attack_fx_sprite.visible = false
+	
+	# Stop any playing attack effect animation
+	var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
+	attack_fx_anim.stop()
