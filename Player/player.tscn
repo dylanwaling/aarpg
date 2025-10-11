@@ -6,6 +6,21 @@
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_edjgo"]
 
+[sub_resource type="Animation" id="Animation_4ntmi"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [1]
+}
+
 [sub_resource type="Animation" id="Animation_l8h54"]
 resource_name = "idle_down"
 length = 0.4
@@ -23,8 +38,10 @@ tracks/0/keys = {
 "values": [0, 1, 2]
 }
 
-[sub_resource type="Animation" id="Animation_4ntmi"]
-length = 0.001
+[sub_resource type="Animation" id="Animation_gwnis"]
+resource_name = "idle_side"
+length = 0.4
+loop_mode = 2
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -32,10 +49,10 @@ tracks/0/path = NodePath("Sprite2D:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat32Array(0, 0.2, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
-"values": [1]
+"values": [14, 15, 16]
 }
 
 [sub_resource type="Animation" id="Animation_btcbx"]
@@ -53,23 +70,6 @@ tracks/0/keys = {
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 1,
 "values": [7, 8, 9]
-}
-
-[sub_resource type="Animation" id="Animation_gwnis"]
-resource_name = "idle_side"
-length = 0.4
-loop_mode = 2
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.2, 0.4),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 1,
-"values": [14, 15, 16]
 }
 
 [sub_resource type="Animation" id="Animation_k53q1"]
@@ -135,6 +135,9 @@ _data = {
 }
 
 [node name="Player" type="CharacterBody2D"]
+collision_mask = 16
+motion_mode = 1
+wall_min_slide_angle = 0.13962634
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_edjgo")
@@ -157,3 +160,5 @@ script = ExtResource("2_btcbx")
 
 [node name="WalkState" type="Node" parent="States"]
 script = ExtResource("3_gwnis")
+
+[node name="Camera2D" type="Camera2D" parent="."]
