@@ -41,9 +41,6 @@ func _show_and_play_attack_effects():
 	# Make the attack effects visible
 	attack_fx_sprite.visible = true
 	
-	# Sync the effect sprite flip with the character sprite
-	attack_fx_sprite.flip_h = player.sprite.flip_h
-	
 	# Determine which effect animation to play based on facing direction
 	var effect_anim_name := ""
 	if _locked_facing == Vector2.UP:
@@ -77,10 +74,27 @@ func _play_attack_sound():
 		# Clean up after the sound finishes
 		temp_audio.finished.connect(func(): temp_audio.queue_free())
 
+func _update_attack_effects():
+	# Get reference to the AttackFX parent node (this is what we'll transform)
+	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
+	
+	# Professional method: Use scale transformation for flipping
+	# This works WITH the animation system, not against it
+	if _locked_facing == Vector2.LEFT or _locked_facing == Vector2.RIGHT:
+		if player.sprite.flip_h:  # Facing left
+			attack_fx_node.scale.x = -1  # Flip horizontally around parent center
+		else:  # Facing right
+			attack_fx_node.scale.x = 1   # Normal scale
+	else:  # Up/down attacks
+		attack_fx_node.scale.x = 1       # Always normal scale for up/down
+
 func update(delta):
 	# Keep facing locked by re-applying it each frame (prevents Player.update_facing from changing it).
 	if lock_facing:
 		player.facing = _locked_facing
+
+	# Handle attack effects transformation (scale-based flipping)
+	_update_attack_effects()
 
 	# Your attack is time-based; count down until it's over.
 	_time_left -= delta
@@ -111,3 +125,7 @@ func exit(_to):
 	# Stop any playing attack effect animation
 	var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
 	attack_fx_anim.stop()
+	
+	# Reset scale transformation (professional cleanup)
+	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
+	attack_fx_node.scale.x = 1
