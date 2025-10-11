@@ -9,7 +9,8 @@ class_name AttackState
 extends "res://Player/Scripts/PlayerState.gd"
 
 @export var attack_duration: float = 0.35  # seconds; adjust to your clip length
-@export var stop_movement: bool = true     # true = set velocity to 0 while attacking
+@export var stop_movement: bool = false    # true = set velocity to 0 while attacking
+@export var attack_movement_speed: float = 30.0  # speed during attack (slower than normal)
 @export var lock_facing: bool = true       # true = keep facing fixed for entire attack
 
 var _time_left: float = 0.0
@@ -20,9 +21,10 @@ func enter(_from):
 	if lock_facing:
 		_locked_facing = player.facing
 
-	# Optionally freeze motion during the attack.
+	# Handle movement during attack
 	if stop_movement:
 		player.velocity = Vector2.ZERO
+	# If not stopping movement, velocity will be handled in update()
 
 	# Play the character attack animation that matches current facing (up/down/side).
 	player.play_anim("attack")
@@ -92,6 +94,14 @@ func update(delta):
 	# Keep facing locked by re-applying it each frame (prevents Player.update_facing from changing it).
 	if lock_facing:
 		player.facing = _locked_facing
+
+	# Handle movement during attack (slow movement if not stopped)
+	if not stop_movement:
+		# Allow slow movement during attack
+		if player.direction != Vector2.ZERO:
+			player.velocity = player.direction * attack_movement_speed
+		else:
+			player.velocity = Vector2.ZERO
 
 	# Handle attack effects transformation (scale-based flipping)
 	_update_attack_effects()
