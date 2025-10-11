@@ -6,4 +6,5 @@
 [node name="Playground" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_wt17y")]
+position = Vector2(240, 180)
 script = ExtResource("2_m8u5f")
