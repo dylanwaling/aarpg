@@ -1,85 +1,64 @@
-# Main Player controller:
-# - Reads input -> direction (normalized)
-# - Computes facing (prefers horizontal when diagonal)
-# - Delegates logic to the current state (Idle/Walk, etc.)
-# - Owns animation helper and state switching
-#
-# Scene requirements (child node names must match):
-#   Player (CharacterBody2D)
-#   ├─ Sprite2D
-#   ├─ AnimationPlayer
-#   └─ States
-#      ├─ IdleState   (IdleState.gd attached)
-#      └─ WalkState   (WalkState.gd attached)
+# Handles player movement, direction, facing, and switching between states.
+# Think of this as the "brain" that delegates behavior to states like Idle or Walk.
 
 class_name Player
 extends CharacterBody2D
 
-# ───────────────────────────────── CONFIG
-@export var move_speed: float = 100.0  # movement speed in pixels/second
+# ─────────── CONFIG ───────────
+@export var move_speed: float = 100.0  # How fast the player moves (pixels/sec)
 
-# ───────────────────────────────── RUNTIME STATE
-var direction: Vector2 = Vector2.ZERO  # current input direction (normalized)
-var facing:   Vector2 = Vector2.DOWN   # last facing dir used to pick animations
-var current               = null       # current state node (IdleState/WalkState)
+# ─────────── RUNTIME ───────────
+var direction: Vector2 = Vector2.ZERO  # Current input direction
+var facing: Vector2   = Vector2.DOWN   # Used for determining animation direction
+var current           = null           # Current active state node (Idle/Walk)
 
-# ───────────────────────────────── NODE REFERENCES (null-safe lookups)
-@onready var sprite: Sprite2D        = get_node_or_null("Sprite2D")
-@onready var anim: AnimationPlayer   = get_node_or_null("AnimationPlayer")
-@onready var states_root: Node       = get_node_or_null("States")
+# ─────────── NODE REFERENCES ───────────
+@onready var sprite: Sprite2D        = $Sprite2D
+@onready var anim: AnimationPlayer   = $AnimationPlayer
+@onready var IdleState               = $States/IdleState
+@onready var WalkState               = $States/WalkState
 
-# Concrete state nodes in the scene tree:
-@onready var IdleState               = get_node_or_null("States/IdleState")
-@onready var WalkState               = get_node_or_null("States/WalkState")
-
-func _ready() -> void:
-	# Hard assertions provide clear messages if the scene is miswired.
-	assert(sprite      != null, "Player: Missing child node 'Sprite2D'")
-	assert(anim        != null, "Player: Missing child node 'AnimationPlayer'")
-	assert(states_root != null, "Player: Missing child node 'States'")
-	assert(IdleState   != null, "Player: Missing node 'States/IdleState'")
-	assert(WalkState   != null, "Player: Missing node 'States/WalkState'")
-
-	# Give each state a back-reference to this Player (so states can call player.*)
-	for s in states_root.get_children():
+# ─────────── INITIALIZATION ───────────
+func _ready():
+	# Give all states a back-reference to this player
+	for s in $States.get_children():
 		s.player = self
 
-	# Start in Idle
+	# Start in Idle mode
 	change_state(IdleState)
 
-func _process(delta: float) -> void:
-	read_direction()   # 1) Poll input to a normalized direction vector
-	update_facing()    # 2) Derive animation-facing from that direction
+# ─────────── FRAME UPDATES ───────────
+func _process(dt):
+	read_direction()   # Read keyboard input
+	update_facing()    # Decide which way player is facing
 	if current:
-		current.update(delta)  # 3) Let the active state do its per-frame logic
+		current.update(dt)
 
-func _physics_process(delta: float) -> void:
+func _physics_process(dt):
 	if current:
-		current.physics_update(delta)  # State-specific physics (optional)
-	move_and_slide()                   # Apply velocity each physics frame
+		current.physics_update(dt)
+	move_and_slide()   # Applies current velocity to movement
 
-func _unhandled_input(event: InputEvent) -> void:
-	# If you later have states that need raw InputEvent, they'll use this.
+# ─────────── INPUT EVENTS (optional) ───────────
+func _unhandled_input(event):
 	if current:
 		current.handle_input(event)
 
-# ───────────────────────────────── STATE MACHINE CORE
-
-# Switch to another state node (e.g., IdleState -> WalkState).
-func change_state(next) -> void:
+# ─────────── STATE MACHINE ───────────
+func change_state(next):
+	# Avoid switching to same or null state
 	if next == null or next == current:
 		return
+
 	var prev = current
 	if current:
-		current.exit(next)  # let old state clean up
+		current.exit(next)
 	current = next
-	current.enter(prev)     # let new state initialize
+	current.enter(prev)
 
-# ───────────────────────────────── INPUT / FACING / ANIMATION HELPERS
-
-# Polls Input Map actions (right/left/down/up) and builds a normalized vector.
-# Normalization keeps diagonal speed the same as horizontal/vertical.
-func read_direction() -> void:
+# ─────────── INPUT & MOVEMENT HELPERS ───────────
+func read_direction():
+	# Combine WASD or arrow key input into a normalized vector
 	direction = Vector2(
 		Input.get_action_strength("right") - Input.get_action_strength("left"),
 		Input.get_action_strength("down")  - Input.get_action_strength("up")
@@ -87,28 +66,23 @@ func read_direction() -> void:
 	if direction != Vector2.ZERO:
 		direction = direction.normalized()
 
-# Computes facing used to choose animation direction.
-# Rule: ANY horizontal input forces side-facing (so diagonals keep "side"),
-# otherwise use vertical facing. We also flip the sprite for left/right.
-func update_facing() -> void:
+func update_facing():
+	# No input = keep last facing direction
 	if direction == Vector2.ZERO:
 		return
 
-	# Prefer horizontal when there is any X input.
+	# Prefer horizontal movement when moving diagonally
 	if direction.x != 0.0:
-		facing = (Vector2.RIGHT if direction.x > 0.0 else Vector2.LEFT)
+		facing = Vector2.RIGHT if direction.x > 0.0 else Vector2.LEFT
 	else:
-		facing = (Vector2.DOWN  if direction.y > 0.0 else Vector2.UP)
+		facing = Vector2.DOWN if direction.y > 0.0 else Vector2.UP
 
-	if sprite:
-		sprite.flip_h = (facing == Vector2.LEFT)
+	# Flip sprite for left-facing movement
+	sprite.flip_h = (facing == Vector2.LEFT)
 
-# Plays "<state>_<dir>" (e.g., "walk_side", "idle_up").
-# Only restarts the animation if the name actually changes (cheap).
-func play_anim(state_name: String) -> void:
-	if anim == null:
-		return
-
+# ─────────── ANIMATION HELPERS ───────────
+func play_anim(state_name: String):
+	# Builds animation name like "walk_side" or "idle_down"
 	var dir_name := "side"
 	if facing == Vector2.UP:
 		dir_name = "up"
@@ -116,5 +90,7 @@ func play_anim(state_name: String) -> void:
 		dir_name = "down"
 
 	var anim_name := "%s_%s" % [state_name, dir_name]
-	if not anim.is_playing() or anim.current_animation != anim_name:
+
+	# Only change animation if it’s different (avoids restarts)
+	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)

@@ -1,16 +1,16 @@
-# The player is not moving. We ensure velocity is zero and play the idle anim.
-# Transitions:
-#   - to WalkState when there is any input direction.
+# Player is standing still.
+# This state keeps the player from moving and plays the idle animation.
+# It transitions to WalkState when movement input is detected.
 
 class_name IdleState
 extends "res://Player/Scripts/PlayerState.gd"
 
 func enter(from):
-	# Ensure we are not drifting if we came from Walk/Dash/etc.
+	# Stop all motion when entering idle
 	player.velocity = Vector2.ZERO
 	player.play_anim("idle")
 
-func update(delta):
-	# If any input direction exists, start walking.
+func update(_dt):
+	# If the player gives movement input, switch to walk
 	if player.direction != Vector2.ZERO:
 		player.change_state(player.WalkState)

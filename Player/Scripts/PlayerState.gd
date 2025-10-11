@@ -1,24 +1,23 @@
-# Base class for all player states (idle, walk, dash, attack, etc.)
-# States are Nodes that get a back-reference to the Player at runtime.
-# We keep this file free of type-hints to avoid load-order/cyclic import issues.
+# Base class for all player states (Idle, Walk, Dash, etc.)
+# Each state node extends this to share the same function structure.
 
 class_name PlayerState
 extends Node
 
-# Set by Player.gd in _ready(): each state gets a ref to the Player node.
+# Reference to the Player node (set automatically in Player.gd)
 var player
 
-# Called once when the state becomes active.
+# Called when entering this state (from a previous state)
 func enter(from): pass
 
-# Called once when the state is about to be replaced by another state.
+# Called when exiting this state (to another state)
 func exit(to): pass
 
-# Input hook (only used if your state wants raw InputEvents).
+# Used if you want to handle raw InputEvents (optional)
 func handle_input(event): pass
 
-# Per-frame update (game-time). Use for logic and animation decisions.
+# Called every frame for logic and animations
 func update(delta): pass
 
-# Fixed-timestep update (physics-time). Use for movement/physics.
+# Called during physics updates (for movement or collisions)
 func physics_update(delta): pass
