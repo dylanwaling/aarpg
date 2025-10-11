@@ -20,3 +20,7 @@ func update(_dt):
 
 	# Update animation every frame to match direction (up/down/side)
 	player.play_anim("walk")
+
+func handle_input(event):
+	if event.is_action_pressed("attack"):
+		player.change_state(player.AttackState)

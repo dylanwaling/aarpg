@@ -14,3 +14,7 @@ func update(_dt):
 	# If the player gives movement input, switch to walk
 	if player.direction != Vector2.ZERO:
 		player.change_state(player.WalkState)
+
+func handle_input(event):
+	if event.is_action_pressed("attack"):
+		player.change_state(player.AttackState)

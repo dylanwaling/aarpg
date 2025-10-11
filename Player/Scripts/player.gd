@@ -17,6 +17,7 @@ var current           = null           # Current active state node (Idle/Walk)
 @onready var anim: AnimationPlayer   = $AnimationPlayer
 @onready var IdleState               = $States/IdleState
 @onready var WalkState               = $States/WalkState
+@onready var AttackState             = $States/AttackState
 
 # ─────────── INITIALIZATION ───────────
 func _ready():
