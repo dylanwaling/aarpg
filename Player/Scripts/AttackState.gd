@@ -139,3 +139,4 @@ func exit(_to):
 	# Reset scale transformation (professional cleanup)
 	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
 	attack_fx_node.scale.x = 1
+	

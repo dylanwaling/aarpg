@@ -19,7 +19,6 @@ var _can_dash: bool = true
 func enter(_from):
     # Can't dash if on cooldown
     if not _can_dash:
-        # Return to previous state or idle if dash is on cooldown
         if player.direction != Vector2.ZERO:
             player.change_state(player.WalkState)
         else:
@@ -58,11 +57,9 @@ func update(delta):
 
 func physics_update(_delta):
     # Maintain dash velocity throughout the dash
-    # Player has no control over movement during dash
     player.velocity = _dash_direction * dash_speed
 
 func _start_cooldown():
-    # Create a timer for the dash cooldown
     var cooldown_timer = Timer.new()
     add_child(cooldown_timer)
     cooldown_timer.wait_time = dash_cooldown
@@ -73,17 +70,14 @@ func _start_cooldown():
 func _reset_dash_availability():
     _can_dash = true
 
-# Public method for other states to check if dash is available
 func can_dash() -> bool:
     return _can_dash
 
 func handle_input(_event):
-    # Player cannot control movement or perform other actions during dash
-    # Could add dash canceling here if desired in the future
+    # No input handling during dash
     pass
 
 func exit(_to):
-    # Clean exit - next state will handle velocity
-    # No special cleanup needed for dash
+    # No special cleanup needed
     pass
 
