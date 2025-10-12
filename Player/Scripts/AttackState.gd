@@ -136,25 +136,35 @@ func update(delta):
 					player.sprite.flip_h = true
 					player.sprite.offset.x = -1
 					player.play_anim("attack")  # Update animation immediately
+					_update_attack_effects()  # Update sword animation for new direction
 					new_dodge_direction = Vector2.LEFT
 				elif player.direction.x > 0:  # Moving right
 					player.facing = Vector2.RIGHT
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
 					player.play_anim("attack")  # Update animation immediately
+					_update_attack_effects()  # Update sword animation for new direction
 					new_dodge_direction = Vector2.RIGHT
-				# Handle vertical dodging (up/down)
+				# Handle vertical dodging (up/down) - switch animations mid-swing
 				elif player.direction.y < 0:  # Moving up
 					player.facing = Vector2.UP
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
-					player.play_anim("attack")  # Update animation immediately
+					# Get current animation progress and switch to attack_up at same time
+					var current_position = player.anim.current_animation_position
+					player.anim.play("attack_up")
+					player.anim.seek(current_position)  # Continue from same point in animation
+					_update_attack_effects()  # Update sword animation for new direction
 					new_dodge_direction = Vector2.UP
 				elif player.direction.y > 0:  # Moving down  
 					player.facing = Vector2.DOWN
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
-					player.play_anim("attack")  # Update animation immediately
+					# Get current animation progress and switch to attack_down at same time
+					var current_position = player.anim.current_animation_position
+					player.anim.play("attack_down")
+					player.anim.seek(current_position)  # Continue from same point in animation
+					_update_attack_effects()  # Update sword animation for new direction
 					new_dodge_direction = Vector2.DOWN
 				
 				# Redirect existing attack hitbox to new dodge direction
