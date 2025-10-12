@@ -150,21 +150,35 @@ func update(delta):
 					player.facing = Vector2.UP
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
-					# Get current animation progress and switch to attack_up at same time
+					# Seamlessly switch to attack_up animation at current progress
 					var current_position = player.anim.current_animation_position
-					player.anim.play("attack_up")
-					player.anim.seek(current_position)  # Continue from same point in animation
-					_update_attack_effects()  # Update sword animation for new direction
+					player.anim.play("attack_up", -1, 1.0, false)
+					player.anim.advance(current_position)  # Jump directly to position without reset
+					
+					# Seamlessly switch attack effects animation to match new direction
+					var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
+					var fx_current_position = attack_fx_anim.current_animation_position
+					attack_fx_anim.play("attack_up", -1, 1.0, false)
+					attack_fx_anim.advance(fx_current_position)  # Jump directly to position without reset
+					
+					_update_attack_effects()  # Update sword positioning for new direction
 					new_dodge_direction = Vector2.UP
 				elif player.direction.y > 0:  # Moving down  
 					player.facing = Vector2.DOWN
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
-					# Get current animation progress and switch to attack_down at same time
+					# Seamlessly switch to attack_down animation at current progress
 					var current_position = player.anim.current_animation_position
-					player.anim.play("attack_down")
-					player.anim.seek(current_position)  # Continue from same point in animation
-					_update_attack_effects()  # Update sword animation for new direction
+					player.anim.play("attack_down", -1, 1.0, false)
+					player.anim.advance(current_position)  # Jump directly to position without reset
+					
+					# Seamlessly switch attack effects animation to match new direction
+					var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
+					var fx_current_position = attack_fx_anim.current_animation_position
+					attack_fx_anim.play("attack_down", -1, 1.0, false)
+					attack_fx_anim.advance(fx_current_position)  # Jump directly to position without reset
+					
+					_update_attack_effects()  # Update sword positioning for new direction
 					new_dodge_direction = Vector2.DOWN
 				
 				# Redirect existing attack hitbox to new dodge direction
