@@ -25,7 +25,7 @@ extends "res://Player/Scripts/PlayerState.gd"
 @export var knockback_strength: float = 100.0       # How hard enemies get knocked back
 @export var hitbox_delay: float = 0.1               # Delay before hitbox becomes active (wind-up time)
 @export var hitbox_duration: float = 0.15           # How long the damage hitbox stays active
-@export var attack_range: float = 30.0              # Attack range - distance to center of hitbox (adjustable for buffs/upgrades)
+@export var attack_range: float = 70.0              # Attack range - distance to center of hitbox (adjustable for buffs/upgrades)
 @export var hitbox_scene: PackedScene               # Drag your Hitbox.tscn here in the inspector
 
 # ─────────── INTERNAL TRACKING VARIABLES ───────────
@@ -211,20 +211,23 @@ func _position_hitbox_for_direction():
 		return
 		
 	var hitbox_offset = Vector2.ZERO
+	var hitbox_half_distance = attack_range * 0.5  # Position hitbox so it extends from player to attack_range
 	
-	# Position hitbox at the center of attack range - consistent positioning for all directions
+	# Position hitbox closer to player - the far edge reaches attack_range distance
 	match _locked_facing:
 		Vector2.UP:
-			hitbox_offset = Vector2(0, -attack_range)
+			hitbox_offset = Vector2(0, -hitbox_half_distance)
 		Vector2.DOWN:
-			hitbox_offset = Vector2(0, attack_range)
+			hitbox_offset = Vector2(0, hitbox_half_distance)
 		Vector2.LEFT:
-			hitbox_offset = Vector2(-attack_range, 0)
+			hitbox_offset = Vector2(-hitbox_half_distance, 0)
 		Vector2.RIGHT:
-			hitbox_offset = Vector2(attack_range, 0)
+			hitbox_offset = Vector2(hitbox_half_distance, 0)
 	
-	# Apply the offset to the hitbox position
-	_current_hitbox.global_position = player.global_position + hitbox_offset
+	# Use sprite center position instead of collision shape center (feet)
+	# The sprite is positioned at (0, -20) relative to the player origin
+	var sprite_center_position = player.global_position + player.sprite.position
+	_current_hitbox.global_position = sprite_center_position + hitbox_offset
 
 func _cleanup_hitbox():
 	"""Remove the active hitbox when attack ends"""
