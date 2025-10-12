@@ -220,7 +220,7 @@ func _position_hitbox_for_direction():
 		Vector2.DOWN:
 			hitbox_offset = Vector2(0, hitbox_half_distance)
 		Vector2.LEFT:
-			hitbox_offset = Vector2(-hitbox_half_distance, 0)
+			hitbox_offset = Vector2(-hitbox_half_distance - -1, 0)  # Small adjustment for left-facing attacks
 		Vector2.RIGHT:
 			hitbox_offset = Vector2(hitbox_half_distance, 0)
 	
