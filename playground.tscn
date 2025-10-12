@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=4 uid="uid://wgf5stsrwi40"]
 
-[ext_resource type="PackedScene" uid="uid://bf4esf57fcnh8" path="res://Player/player.tscn" id="1_wt17y"]
+[ext_resource type="PackedScene" uid="uid://bf4esf57fcnh8" path="res://Player/Player.tscn" id="1_wt17y"]
 [ext_resource type="Script" uid="uid://dea0ldwa8lkts" path="res://Player/Scripts/Player.gd" id="2_m8u5f"]
 [ext_resource type="PackedScene" uid="uid://c6vo8q7713q1d" path="res://Tile Maps/Grass01.tscn" id="3_m8u5f"]
 

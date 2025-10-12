@@ -20,9 +20,18 @@ extends "res://Player/Scripts/PlayerState.gd"
 @export var attack_movement_speed: float = 30.0     # If movement allowed, how fast (slower than normal)
 @export var lock_facing: bool = true                # If true, player can't turn around mid-attack
 
+# ─────────── DAMAGE AND HITBOX SETTINGS ───────────
+@export var attack_damage: int = 15                 # How much damage each attack deals
+@export var knockback_strength: float = 100.0       # How hard enemies get knocked back
+@export var hitbox_delay: float = 0.1               # Delay before hitbox becomes active (wind-up time)
+@export var hitbox_duration: float = 0.15           # How long the damage hitbox stays active
+@export var hitbox_scene: PackedScene               # Drag your Hitbox.tscn here in the inspector
+
 # ─────────── INTERNAL TRACKING VARIABLES ───────────
 var _time_left: float = 0.0                # Counts down from attack_duration to 0
 var _locked_facing: Vector2 = Vector2.DOWN  # Remembers which way player was facing when attack started
+var _current_hitbox: Node = null           # Reference to the active damage hitbox
+var _hitbox_created: bool = false          # Tracks if we've already created the hitbox this attack
 
 func enter(_from):
 	# Remember which direction the player was facing when the attack started
@@ -40,9 +49,13 @@ func enter(_from):
 	
 	# Show the visual effects (like sword swoosh) and play attack sounds
 	_show_and_play_attack_effects()
+	
+	# Set up the damage hitbox with a slight delay for wind-up
+	_setup_attack_hitbox()
 
 	# Start counting down the attack timer
 	_time_left = attack_duration
+	_hitbox_created = false
 
 func _show_and_play_attack_effects():
 	# Get references to the attack effects nodes
@@ -139,6 +152,9 @@ func physics_update(_delta):
 	pass
 
 func exit(_to):
+	# Clean up any active hitbox
+	_cleanup_hitbox()
+	
 	# Hide the attack effects when exiting the attack state
 	var attack_fx_sprite = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite")
 	attack_fx_sprite.visible = false
@@ -150,3 +166,61 @@ func exit(_to):
 	# Reset scale transformation (professional cleanup)
 	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
 	attack_fx_node.scale.x = 1
+
+# ─────────── HITBOX SYSTEM METHODS ───────────
+func _setup_attack_hitbox():
+	"""Prepares the hitbox system (called when attack starts)"""
+	# Load default hitbox if none assigned in inspector
+	if not hitbox_scene:
+		hitbox_scene = preload("res://GeneralNodes/Hitbox/Hitbox.tscn")
+		if not hitbox_scene:
+			push_warning("No hitbox scene found! Create a Hitbox.tscn in GeneralNodes/Hitbox/")
+			return
+
+func _create_damage_hitbox():
+	"""Creates and activates the damage hitbox"""
+	if not hitbox_scene:
+		return
+		
+	# Create the hitbox instance
+	_current_hitbox = hitbox_scene.instantiate()
+	player.add_child(_current_hitbox)
+	
+	# Position the hitbox based on attack direction
+	_position_hitbox_for_direction()
+	
+	# Configure the hitbox for player attacks
+	_current_hitbox.setup_player_attack(attack_damage, knockback_strength)
+	_current_hitbox.hit_duration = hitbox_duration
+	
+	# Activate the hitbox
+	_current_hitbox.activate_hitbox()
+
+func _position_hitbox_for_direction():
+	"""Position the hitbox in front of the player based on attack direction"""
+	if not _current_hitbox:
+		return
+		
+	var hitbox_offset = Vector2.ZERO
+	var hitbox_distance = 40  # How far in front of player the hitbox appears
+	
+	# Position based on locked facing direction
+	match _locked_facing:
+		Vector2.UP:
+			hitbox_offset = Vector2(0, -hitbox_distance)
+		Vector2.DOWN:
+			hitbox_offset = Vector2(0, hitbox_distance)
+		Vector2.LEFT:
+			hitbox_offset = Vector2(-hitbox_distance, 0)
+		Vector2.RIGHT:
+			hitbox_offset = Vector2(hitbox_distance, 0)
+	
+	# Apply the offset to the hitbox position
+	_current_hitbox.global_position = player.global_position + hitbox_offset
+
+func _cleanup_hitbox():
+	"""Remove the active hitbox when attack ends"""
+	if _current_hitbox and is_instance_valid(_current_hitbox):
+		_current_hitbox.deactivate_hitbox()
+		_current_hitbox.queue_free()
+		_current_hitbox = null
