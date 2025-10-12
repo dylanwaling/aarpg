@@ -1,38 +1,47 @@
-# Player attacks once, then returns to Idle or Walk depending on input.
-# - Plays: attack_up / attack_down / attack_side (via player.play_anim("attack"))
-# - Also triggers corresponding attack effect animations
-# - Locks facing for the whole attack (so diagonals won't flip mid-swing)
-# - Optional: stops movement during attack (default true)
-# - Simple duration-based end (no need to wire animation_finished unless you want to)
+## ATTACK STATE - Handles Everything That Happens During an Attack
+##
+## When the player presses the attack button, this state takes over and handles:
+## - Playing the correct attack animation (up/down/side based on facing direction)
+## - Showing visual attack effects (sword swooshes, etc.) that match the animation
+## - Playing attack sound effects
+## - Preventing the player from changing direction mid-attack (no spinning around)
+## - Optionally allowing slow movement or stopping completely during attacks
+## - Timing how long the attack lasts, then returning to idle or walking
+##
+## This keeps attacks feeling consistent and prevents weird behavior like
+## starting an attack facing right but ending up facing left halfway through.
 
 class_name AttackState
 extends "res://Player/Scripts/PlayerState.gd"
 
-@export var attack_duration: float = 0.35  # seconds; adjust to your clip length
-@export var stop_movement: bool = false    # true = set velocity to 0 while attacking
-@export var attack_movement_speed: float = 30.0  # speed during attack (slower than normal)
-@export var lock_facing: bool = true       # true = keep facing fixed for entire attack
+# ─────────── ATTACK SETTINGS YOU CAN TWEAK ───────────
+@export var attack_duration: float = 0.35           # How long the attack lasts in seconds
+@export var stop_movement: bool = false             # If true, player can't move during attacks
+@export var attack_movement_speed: float = 30.0     # If movement allowed, how fast (slower than normal)
+@export var lock_facing: bool = true                # If true, player can't turn around mid-attack
 
-var _time_left: float = 0.0
-var _locked_facing: Vector2 = Vector2.DOWN
+# ─────────── INTERNAL TRACKING VARIABLES ───────────
+var _time_left: float = 0.0                # Counts down from attack_duration to 0
+var _locked_facing: Vector2 = Vector2.DOWN  # Remembers which way player was facing when attack started
 
 func enter(_from):
-	# Snapshot facing so the animation direction won't change mid-attack.
+	# Remember which direction the player was facing when the attack started
+	# This prevents them from spinning around mid-attack which looks weird
 	if lock_facing:
 		_locked_facing = player.facing
 
-	# Handle movement during attack
+	# Decide if the player can move during the attack
 	if stop_movement:
-		player.velocity = Vector2.ZERO
-	# If not stopping movement, velocity will be handled in update()
+		player.velocity = Vector2.ZERO  # Stop completely
+	# If stop_movement is false, we'll handle slow movement in the update() function
 
-	# Play the character attack animation that matches current facing (up/down/side).
+	# Start the character's attack animation (attack_up, attack_down, or attack_side)
 	player.play_anim("attack")
 	
-	# Show and play the corresponding attack effect animation
+	# Show the visual effects (like sword swoosh) and play attack sounds
 	_show_and_play_attack_effects()
 
-	# Start the attack timer.
+	# Start counting down the attack timer
 	_time_left = attack_duration
 
 func _show_and_play_attack_effects():
@@ -111,11 +120,13 @@ func update(delta):
 	if _time_left > 0.0:
 		return
 
-	# When done: if player is still giving movement input, go to Walk; otherwise go Idle.
+	# When the attack finishes, decide what to do next based on player input
 	if player.direction != Vector2.ZERO:
-		player.change_state(player.WalkState)
+		# Player is still trying to move, so go to walking state
+		player.change_state(player.walk_state)
 	else:
-		player.change_state(player.IdleState)
+		# Player isn't trying to move, so go back to idle
+		player.change_state(player.idle_state)
 
 func handle_input(_event):
 	# (Optional) If you later want to buffer combo inputs, you'd read them here.
@@ -139,4 +150,3 @@ func exit(_to):
 	# Reset scale transformation (professional cleanup)
 	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
 	attack_fx_node.scale.x = 1
-	
