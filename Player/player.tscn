@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://bf4esf57fcnh8"]
+[gd_scene load_steps=27 format=3 uid="uid://bf4esf57fcnh8"]
 
 [ext_resource type="Texture2D" uid="uid://o3e3kn504do0" path="res://Player/Sprites/PlayerSprite02.png" id="1_btcbx"]
 [ext_resource type="Script" uid="uid://cyrer5xf1hoe8" path="res://Player/Scripts/IdleState.gd" id="2_btcbx"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://hdq0d4xkdg1t" path="res://Player/Scripts/WalkState.gd" id="3_gwnis"]
 [ext_resource type="Script" uid="uid://b761552yeb8ov" path="res://Player/Scripts/AttackState.gd" id="4_gwnis"]
 [ext_resource type="Script" uid="uid://xe7ts6lhkvky" path="res://Player/Scripts/DashState.gd" id="7_vtle1"]
+[ext_resource type="Script" uid="uid://dq4wfb6ceho5w" path="res://GeneralNodes/Hurtbox/HurtBox.gd" id="8_s1rgi"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_edjgo"]
 
@@ -308,8 +309,11 @@ _data = {
 &"walk_up": SubResource("Animation_vtle1")
 }
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_j23h2"]
+size = Vector2(33, 44)
+
 [node name="Player" type="CharacterBody2D"]
-collision_mask = 16
+collision_mask = 32
 motion_mode = 1
 wall_min_slide_angle = 0.13962634
 
@@ -361,3 +365,12 @@ script = ExtResource("4_gwnis")
 script = ExtResource("7_vtle1")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="HurtBox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 4096
+script = ExtResource("8_s1rgi")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtBox"]
+position = Vector2(-1.5, -21)
+shape = SubResource("RectangleShape2D_j23h2")

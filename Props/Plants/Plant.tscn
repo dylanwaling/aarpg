@@ -11,20 +11,25 @@ size = Vector2(23, 16)
 script = ExtResource("1_akllp")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -9)
 texture = ExtResource("1_e71d2")
 hframes = 16
 vframes = 3
 
 [node name="HitBox" parent="." instance=ExtResource("2_akllp")]
-position = Vector2(-498, -48)
+position = Vector2(0, -2)
+collision_layer = 64
+collision_mask = 4
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="HitBox"]
-position = Vector2(498, 57)
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="HitBox"]
+position = Vector2(0, 2)
 shape = SubResource("RectangleShape2D_w3sfv")
 
-[node name="StaticBody2D" type="StaticBody2D" parent="HitBox"]
-position = Vector2(498, 48)
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+position = Vector2(0, -9)
+collision_layer = 32
+collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="HitBox/StaticBody2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
 position = Vector2(0, 9)
 shape = SubResource("RectangleShape2D_w3sfv")

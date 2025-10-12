@@ -34,6 +34,8 @@ var _current_hitbox: Node = null           # Reference to the active damage hitb
 var _hitbox_created: bool = false          # Tracks if we've already created the hitbox this attack
 
 func enter(_from):
+	print("=== PLAYER ATTACK STARTED ===")
+	
 	# Remember which direction the player was facing when the attack started
 	# This prevents them from spinning around mid-attack which looks weird
 	if lock_facing:
@@ -170,31 +172,54 @@ func exit(_to):
 # ─────────── HITBOX SYSTEM METHODS ───────────
 func _setup_attack_hitbox():
 	"""Prepares the hitbox system (called when attack starts)"""
+	print("Setting up attack hitbox...")
+	
 	# Load default hitbox if none assigned in inspector
 	if not hitbox_scene:
 		hitbox_scene = preload("res://GeneralNodes/Hitbox/Hitbox.tscn")
 		if not hitbox_scene:
-			push_warning("No hitbox scene found! Create a Hitbox.tscn in GeneralNodes/Hitbox/")
+			print("ERROR: No hitbox scene found! Create a Hitbox.tscn in GeneralNodes/Hitbox/")
 			return
+		else:
+			print("Loaded default hitbox scene")
+	else:
+		print("Using assigned hitbox scene")
+	
+	# Create the hitbox with delay
+	get_tree().create_timer(hitbox_delay).timeout.connect(_create_damage_hitbox)
+	print("Hitbox will be created in ", hitbox_delay, " seconds")
 
 func _create_damage_hitbox():
 	"""Creates and activates the damage hitbox"""
+	print("*** CREATING ATTACK HITBOX ***")
+	
 	if not hitbox_scene:
+		print("ERROR: No hitbox scene available!")
 		return
 		
 	# Create the hitbox instance
 	_current_hitbox = hitbox_scene.instantiate()
 	player.add_child(_current_hitbox)
 	
+	print("Hitbox created! Layer: ", _current_hitbox.collision_layer, " Mask: ", _current_hitbox.collision_mask)
+	
 	# Position the hitbox based on attack direction
 	_position_hitbox_for_direction()
 	
-	# Configure the hitbox for player attacks
-	_current_hitbox.setup_player_attack(attack_damage, knockback_strength)
+	# Configure the hitbox damage and timing
+	_current_hitbox.damage = attack_damage
+	_current_hitbox.knockback_force = knockback_strength
 	_current_hitbox.hit_duration = hitbox_duration
+	_current_hitbox.hit_type = _current_hitbox.HitType.COMBO
+	
+	print("Hitbox configured - Damage: ", _current_hitbox.damage, " Position: ", _current_hitbox.global_position)
+	
+	# NOTE: Collision layers and masks are set in the Hitbox.tscn scene in the UI
+	# This respects your preference to keep collision settings in the inspector
 	
 	# Activate the hitbox
 	_current_hitbox.activate_hitbox()
+	print("Hitbox activated!")
 
 func _position_hitbox_for_direction():
 	"""Position the hitbox in front of the player based on attack direction"""

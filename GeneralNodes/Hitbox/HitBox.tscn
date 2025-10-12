@@ -1,9 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://dlg0dema0uf3w"]
+[gd_scene load_steps=3 format=3 uid="uid://dlg0dema0uf3w"]
 
 [ext_resource type="Script" uid="uid://dqrt2g35b4rvt" path="res://GeneralNodes/Hitbox/Hitbox.gd" id="1_ibfht"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ibfht"]
+
 [node name="HitBox" type="Area2D"]
-collision_layer = 256
-collision_mask = 0
-monitoring = false
+collision_layer = 4
+collision_mask = 2112
 script = ExtResource("1_ibfht")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_ibfht")
