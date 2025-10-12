@@ -18,3 +18,5 @@ func update(_dt):
 func handle_input(event):
 	if event.is_action_pressed("attack"):
 		player.change_state(player.AttackState)
+	elif event.is_action_pressed("dash") and player.dash_state.can_dash():
+		player.change_state(player.dash_state)

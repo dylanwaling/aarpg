@@ -18,6 +18,7 @@ var current           = null           # Current active state node (Idle/Walk)
 @onready var IdleState               = $States/IdleState
 @onready var WalkState               = $States/WalkState
 @onready var AttackState             = $States/AttackState
+@onready var dash_state              = $States/DashState
 
 # ─────────── INITIALIZATION ───────────
 func _ready():
