@@ -210,18 +210,18 @@ func _position_hitbox_for_direction():
 		return
 		
 	var hitbox_offset = Vector2.ZERO
-	var hitbox_distance = 40  # How far in front of player the hitbox appears
+	var close_range_offset = 10  # Small offset so hitbox covers area right next to player
 	
-	# Position based on locked facing direction
+	# Position hitbox slightly in front of player to cover close-range attacks
 	match _locked_facing:
 		Vector2.UP:
-			hitbox_offset = Vector2(0, -hitbox_distance)
+			hitbox_offset = Vector2(0, -close_range_offset)
 		Vector2.DOWN:
-			hitbox_offset = Vector2(0, hitbox_distance)
+			hitbox_offset = Vector2(0, close_range_offset)
 		Vector2.LEFT:
-			hitbox_offset = Vector2(-hitbox_distance, 0)
+			hitbox_offset = Vector2(-close_range_offset, 0)
 		Vector2.RIGHT:
-			hitbox_offset = Vector2(hitbox_distance, 0)
+			hitbox_offset = Vector2(close_range_offset, 0)
 	
 	# Apply the offset to the hitbox position
 	_current_hitbox.global_position = player.global_position + hitbox_offset
