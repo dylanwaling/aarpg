@@ -1,8 +1,9 @@
-[gd_scene load_steps=23 format=3 uid="uid://bf4esf57fcnh8"]
+[gd_scene load_steps=24 format=3 uid="uid://bf4esf57fcnh8"]
 
 [ext_resource type="Texture2D" uid="uid://o3e3kn504do0" path="res://Player/Sprites/PlayerSprite02.png" id="1_btcbx"]
 [ext_resource type="Script" uid="uid://cyrer5xf1hoe8" path="res://Player/Scripts/IdleState.gd" id="2_btcbx"]
 [ext_resource type="Texture2D" uid="uid://b2v6h3thvxtdi" path="res://Player/Sprites/AttackSprite01.png" id="2_k53q1"]
+[ext_resource type="Texture2D" uid="uid://d1kd7q3k48wwr" path="res://Player/Sprites/Shadow.png" id="3_fhl08"]
 [ext_resource type="Script" uid="uid://hdq0d4xkdg1t" path="res://Player/Scripts/WalkState.gd" id="3_gwnis"]
 [ext_resource type="Script" uid="uid://b761552yeb8ov" path="res://Player/Scripts/AttackState.gd" id="4_gwnis"]
 
@@ -332,6 +333,12 @@ hframes = 12
 libraries = {
 &"": SubResource("AnimationLibrary_dkpta")
 }
+
+[node name="ShadowSprite" type="Sprite2D" parent="Sprite2D"]
+modulate = Color(0, 0, 0, 0.78431374)
+show_behind_parent = true
+position = Vector2(0, 20)
+texture = ExtResource("3_fhl08")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
