@@ -137,9 +137,30 @@ func update(delta):
 			if _is_retreat_movement(player.direction, _locked_facing):
 				# Retreat movement is much faster for tactical dodging
 				movement_velocity = player.direction * (player.move_speed * 1.5)
+				
+				# Flip sprite immediately when dodge starts to show backing away
+				if player.direction.x < 0:  # Moving left
+					player.sprite.flip_h = true
+					player.sprite.offset.x = -1
+				elif player.direction.x > 0:  # Moving right
+					player.sprite.flip_h = false
+					player.sprite.offset.x = 0
+			else:
+				# Normal attack movement - keep sprite locked to attack direction
+				player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
+				if _locked_facing == Vector2.LEFT:
+					player.sprite.offset.x = -1
+				else:
+					player.sprite.offset.x = 0
 			
 			player.velocity = movement_velocity
 		else:
+			# No movement - keep sprite locked to attack direction
+			player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
+			if _locked_facing == Vector2.LEFT:
+				player.sprite.offset.x = -1
+			else:
+				player.sprite.offset.x = 0
 			player.velocity = Vector2.ZERO
 
 	# Handle attack effects transformation (scale-based flipping)
