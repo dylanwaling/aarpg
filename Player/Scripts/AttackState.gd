@@ -127,29 +127,39 @@ func update(delta):
 				# Retreat movement is much faster for tactical dodging
 				movement_velocity = player.direction * (player.move_speed * 1.5)
 				
-				# Update sprite immediately when dodge starts to show backing away
-				# Handle horizontal dodging (left/right) - same logic as before
+				# Update sprite and redirect attack when dodge starts
+				var new_dodge_direction = Vector2.ZERO
+				
+				# Handle horizontal dodging (left/right)
 				if player.direction.x < 0:  # Moving left
 					player.facing = Vector2.LEFT
 					player.sprite.flip_h = true
 					player.sprite.offset.x = -1
 					player.play_anim("attack")  # Update animation immediately
+					new_dodge_direction = Vector2.LEFT
 				elif player.direction.x > 0:  # Moving right
 					player.facing = Vector2.RIGHT
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
 					player.play_anim("attack")  # Update animation immediately
-				# Handle vertical dodging (up/down) - same pattern as horizontal
+					new_dodge_direction = Vector2.RIGHT
+				# Handle vertical dodging (up/down)
 				elif player.direction.y < 0:  # Moving up
 					player.facing = Vector2.UP
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
 					player.play_anim("attack")  # Update animation immediately
+					new_dodge_direction = Vector2.UP
 				elif player.direction.y > 0:  # Moving down  
 					player.facing = Vector2.DOWN
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
 					player.play_anim("attack")  # Update animation immediately
+					new_dodge_direction = Vector2.DOWN
+				
+				# Redirect existing attack hitbox to new dodge direction
+				if _current_hitbox and is_instance_valid(_current_hitbox):
+					_redirect_hitbox_to_direction(new_dodge_direction)
 			else:
 				# Normal attack movement - keep sprite locked to attack direction
 				if lock_facing:
@@ -316,3 +326,25 @@ func _is_retreat_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
 	
 	return false
 
+func _redirect_hitbox_to_direction(new_direction: Vector2):
+	"""Redirect the existing attack hitbox to the new dodge direction"""
+	if not _current_hitbox or not is_instance_valid(_current_hitbox):
+		return
+	
+	# Calculate new hitbox position based on new direction
+	var hitbox_offset = Vector2.ZERO
+	var hitbox_half_distance = attack_range * 0.5
+	
+	match new_direction:
+		Vector2.UP:
+			hitbox_offset = Vector2(0, -hitbox_half_distance)
+		Vector2.DOWN:
+			hitbox_offset = Vector2(0, hitbox_half_distance)
+		Vector2.LEFT:
+			hitbox_offset = Vector2(-hitbox_half_distance, 0)
+		Vector2.RIGHT:
+			hitbox_offset = Vector2(hitbox_half_distance, 0)
+	
+	# Move existing hitbox to new position
+	var sprite_center_position = player.global_position + player.sprite.position
+	_current_hitbox.global_position = sprite_center_position + hitbox_offset
