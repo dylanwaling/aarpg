@@ -25,6 +25,7 @@ extends "res://Player/Scripts/PlayerState.gd"
 @export var knockback_strength: float = 100.0       # How hard enemies get knocked back
 @export var hitbox_delay: float = 0.1               # Delay before hitbox becomes active (wind-up time)
 @export var hitbox_duration: float = 0.15           # How long the damage hitbox stays active
+@export var attack_range: float = 30.0              # Attack range - distance to center of hitbox (adjustable for buffs/upgrades)
 @export var hitbox_scene: PackedScene               # Drag your Hitbox.tscn here in the inspector
 
 # ─────────── INTERNAL TRACKING VARIABLES ───────────
@@ -210,18 +211,17 @@ func _position_hitbox_for_direction():
 		return
 		
 	var hitbox_offset = Vector2.ZERO
-	var close_range_offset = 10  # Small offset so hitbox covers area right next to player
 	
-	# Position hitbox slightly in front of player to cover close-range attacks
+	# Position hitbox at the center of attack range - consistent positioning for all directions
 	match _locked_facing:
 		Vector2.UP:
-			hitbox_offset = Vector2(0, -close_range_offset)
+			hitbox_offset = Vector2(0, -attack_range)
 		Vector2.DOWN:
-			hitbox_offset = Vector2(0, close_range_offset)
+			hitbox_offset = Vector2(0, attack_range)
 		Vector2.LEFT:
-			hitbox_offset = Vector2(-close_range_offset, 0)
+			hitbox_offset = Vector2(-attack_range, 0)
 		Vector2.RIGHT:
-			hitbox_offset = Vector2(close_range_offset, 0)
+			hitbox_offset = Vector2(attack_range, 0)
 	
 	# Apply the offset to the hitbox position
 	_current_hitbox.global_position = player.global_position + hitbox_offset
@@ -232,3 +232,20 @@ func _cleanup_hitbox():
 		_current_hitbox.deactivate_hitbox()
 		_current_hitbox.queue_free()
 		_current_hitbox = null
+
+# ─────────── ATTACK RANGE MODIFICATION METHODS ───────────
+func set_attack_range(new_range: float):
+	"""Set attack range - useful for buffs, upgrades, or different weapons"""
+	attack_range = new_range
+
+func get_attack_range() -> float:
+	"""Get current attack range"""
+	return attack_range
+
+func multiply_attack_range(multiplier: float):
+	"""Multiply attack range by a factor - useful for temporary buffs"""
+	attack_range *= multiplier
+
+func add_attack_range_bonus(bonus: float):
+	"""Add flat bonus to attack range - useful for equipment/upgrades"""
+	attack_range += bonus
