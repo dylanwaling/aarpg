@@ -116,17 +116,6 @@ func _update_attack_effects():
 		attack_fx_node.scale.x = 1       # Always normal scale for up/down
 
 func update(delta):
-	# Keep facing locked by re-applying it each frame (prevents Player.update_facing from changing it).
-	if lock_facing:
-		player.facing = _locked_facing
-		# Also ensure sprite flipping matches the locked facing direction
-		player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
-		# Update sprite offset to match the locked direction
-		if _locked_facing == Vector2.LEFT:
-			player.sprite.offset.x = -1
-		else:
-			player.sprite.offset.x = 0
-
 	# Handle movement during attack (slow movement if not stopped)
 	if not stop_movement:
 		# Allow movement during attack with dodge boost for retreat
@@ -138,15 +127,33 @@ func update(delta):
 				# Retreat movement is much faster for tactical dodging
 				movement_velocity = player.direction * (player.move_speed * 1.5)
 				
-				# Flip sprite immediately when dodge starts to show backing away
+				# Update sprite immediately when dodge starts to show backing away
+				# Handle horizontal dodging (left/right) - same logic as before
 				if player.direction.x < 0:  # Moving left
+					player.facing = Vector2.LEFT
 					player.sprite.flip_h = true
 					player.sprite.offset.x = -1
+					player.play_anim("attack")  # Update animation immediately
 				elif player.direction.x > 0:  # Moving right
+					player.facing = Vector2.RIGHT
 					player.sprite.flip_h = false
 					player.sprite.offset.x = 0
+					player.play_anim("attack")  # Update animation immediately
+				# Handle vertical dodging (up/down) - same pattern as horizontal
+				elif player.direction.y < 0:  # Moving up
+					player.facing = Vector2.UP
+					player.sprite.flip_h = false
+					player.sprite.offset.x = 0
+					player.play_anim("attack")  # Update animation immediately
+				elif player.direction.y > 0:  # Moving down  
+					player.facing = Vector2.DOWN
+					player.sprite.flip_h = false
+					player.sprite.offset.x = 0
+					player.play_anim("attack")  # Update animation immediately
 			else:
 				# Normal attack movement - keep sprite locked to attack direction
+				if lock_facing:
+					player.facing = _locked_facing
 				player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
 				if _locked_facing == Vector2.LEFT:
 					player.sprite.offset.x = -1
@@ -156,6 +163,8 @@ func update(delta):
 			player.velocity = movement_velocity
 		else:
 			# No movement - keep sprite locked to attack direction
+			if lock_facing:
+				player.facing = _locked_facing
 			player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
 			if _locked_facing == Vector2.LEFT:
 				player.sprite.offset.x = -1
