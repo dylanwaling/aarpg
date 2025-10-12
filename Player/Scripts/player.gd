@@ -101,6 +101,12 @@ func update_facing():
 
 	# Flip the sprite horizontally when facing left (mirror image)
 	sprite.flip_h = (facing == Vector2.LEFT)
+	
+	# When flipped, add 1 pixel offset to fix visual centering
+	if facing == Vector2.LEFT:
+		sprite.offset.x = -1
+	else:
+		sprite.offset.x = 0
 
 # ─────────── ANIMATION HELPERS ───────────
 func play_anim(state_name: String):
