@@ -34,6 +34,8 @@ var _locked_facing: Vector2 = Vector2.DOWN  # Remembers which way player was fac
 var _current_hitbox: Node = null           # Reference to the active damage hitbox
 var _hitbox_created: bool = false          # Tracks if we've already created the hitbox this attack
 
+
+
 func enter(_from):
 	# Remember which direction the player was facing when the attack started
 	# This prevents them from spinning around mid-attack which looks weird
@@ -298,3 +300,4 @@ func _is_defensive_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
 		return true  # Attacking down, moving up (backing up)
 	
 	return false
+
