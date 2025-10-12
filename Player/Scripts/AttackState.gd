@@ -117,6 +117,13 @@ func update(delta):
 	# Keep facing locked by re-applying it each frame (prevents Player.update_facing from changing it).
 	if lock_facing:
 		player.facing = _locked_facing
+		# Also ensure sprite flipping matches the locked facing direction
+		player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
+		# Update sprite offset to match the locked direction
+		if _locked_facing == Vector2.LEFT:
+			player.sprite.offset.x = -1
+		else:
+			player.sprite.offset.x = 0
 
 	# Handle movement during attack (slow movement if not stopped)
 	if not stop_movement:
