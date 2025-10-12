@@ -119,42 +119,27 @@ func update(delta):
 	# Keep facing locked by re-applying it each frame (prevents Player.update_facing from changing it).
 	if lock_facing:
 		player.facing = _locked_facing
+		# Also ensure sprite flipping matches the locked facing direction
+		player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
+		# Update sprite offset to match the locked direction
+		if _locked_facing == Vector2.LEFT:
+			player.sprite.offset.x = -1
+		else:
+			player.sprite.offset.x = 0
 
 	# Handle movement during attack (slow movement if not stopped)
 	if not stop_movement:
-		# Allow movement during attack with special defensive retreat logic
+		# Allow movement during attack with dodge boost for retreat
 		if player.direction != Vector2.ZERO:
 			var movement_velocity = player.direction * attack_movement_speed
 			
-			# Defensive retreat: if moving opposite to attack direction, allow it (backing up while attacking)
-			var is_defensive_retreat = _is_defensive_movement(player.direction, _locked_facing)
-			if is_defensive_retreat:
-				# Defensive movement is much faster - use 150% of normal speed for dramatic effect
+			# Attack-dodge: if moving opposite to attack direction, give speed boost
+			if _is_retreat_movement(player.direction, _locked_facing):
+				# Retreat movement is much faster for tactical dodging
 				movement_velocity = player.direction * (player.move_speed * 1.5)
-				
-				# Allow sprite to flip during defensive retreat for natural look
-				if player.direction.x < 0:  # Moving left
-					player.sprite.flip_h = true
-					player.sprite.offset.x = -1
-				elif player.direction.x > 0:  # Moving right  
-					player.sprite.flip_h = false
-					player.sprite.offset.x = 0
-			else:
-				# Normal attack - keep sprite locked to attack direction
-				player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
-				if _locked_facing == Vector2.LEFT:
-					player.sprite.offset.x = -1
-				else:
-					player.sprite.offset.x = 0
 			
 			player.velocity = movement_velocity
 		else:
-			# No movement - keep sprite locked to attack direction
-			player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
-			if _locked_facing == Vector2.LEFT:
-				player.sprite.offset.x = -1
-			else:
-				player.sprite.offset.x = 0
 			player.velocity = Vector2.ZERO
 
 	# Handle attack effects transformation (scale-based flipping)
@@ -284,20 +269,20 @@ func add_attack_range_bonus(bonus: float):
 	"""Add flat bonus to attack range - useful for equipment/upgrades"""
 	attack_range += bonus
 
-# ─────────── DEFENSIVE MOVEMENT HELPER ───────────
-func _is_defensive_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
-	"""Check if the player is trying to move away from their attack direction (defensive retreat)"""
+# ─────────── ATTACK-DODGE HELPER ───────────
+func _is_retreat_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
+	"""Check if player is moving opposite to attack direction (attack-dodge retreat)"""
 	# For side attacks, check if moving in opposite horizontal direction
-	if attack_dir == Vector2.LEFT and movement_dir.x > 0:
-		return true  # Attacking left, moving right (backing up)
-	if attack_dir == Vector2.RIGHT and movement_dir.x < 0:
-		return true  # Attacking right, moving left (backing up)
+	if attack_dir == Vector2.LEFT and movement_dir.x > 0.3:
+		return true  # Attacking left, moving right (retreat dodge)
+	if attack_dir == Vector2.RIGHT and movement_dir.x < -0.3:
+		return true  # Attacking right, moving left (retreat dodge)
 	
-	# For vertical attacks, check if moving in opposite vertical direction
-	if attack_dir == Vector2.UP and movement_dir.y > 0:
-		return true  # Attacking up, moving down (backing up)
-	if attack_dir == Vector2.DOWN and movement_dir.y < 0:
-		return true  # Attacking down, moving up (backing up)
+	# For vertical attacks, check if moving in opposite vertical direction  
+	if attack_dir == Vector2.UP and movement_dir.y > 0.3:
+		return true  # Attacking up, moving down (retreat dodge)
+	if attack_dir == Vector2.DOWN and movement_dir.y < -0.3:
+		return true  # Attacking down, moving up (retreat dodge)
 	
 	return false
 
