@@ -35,6 +35,7 @@ var is_dead: bool = false                      # Whether this enemy has been def
 @onready var anim: AnimationPlayer   = $AnimationPlayer   # Controls all enemy animations (walk, idle, attack)
 @onready var hitbox: Area2D          = $HitBox           # Takes damage from player attacks
 @onready var hurtbox: Area2D         = $HurtBox          # Deals damage to player (if enemy can attack)
+@onready var health_label: Label     = null              # Health display (created dynamically)
 @onready var idle_state              = $States/EnemyIdleState     # Handles when enemy is standing still
 @onready var wander_state            = $States/EnemyWanderState   # Handles when enemy is wandering around
 @onready var walk_state              = $States/EnemyWalkState     # Handles when enemy is moving around
@@ -58,6 +59,9 @@ func _ready():
 
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
+	
+	# Create health display for debugging
+	_create_health_display()
 	
 	# Start in Idle mode
 	change_state(idle_state)
@@ -98,6 +102,9 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 		
 	# Subtract damage from health
 	health -= amount
+	
+	# Update health display
+	_update_health_display()
 	
 	# Check if enemy should die
 	if health <= 0:
@@ -192,3 +199,26 @@ func play_anim(state_name: String):
 	# Only change animation if it's different (avoids restarts)
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
+
+# ─────────── HEALTH DISPLAY (DEBUG) ───────────
+func _create_health_display():
+	"""Create a simple red health number above the enemy"""
+	health_label = Label.new()
+	add_child(health_label)
+	
+	# Position centered horizontally, above the slime's head
+	health_label.position = Vector2(-5, 4)
+	health_label.anchor_left = 0.5
+	health_label.anchor_right = 0.5
+	
+	# Simple red text, smaller font
+	health_label.add_theme_color_override("font_color", Color.RED)
+	health_label.add_theme_font_size_override("font_size", 8)
+	
+	# Set initial health text
+	health_label.text = str(health)
+
+func _update_health_display():
+	"""Update the health number when health changes"""
+	if health_label:
+		health_label.text = str(health)
