@@ -13,6 +13,7 @@ extends CharacterBody2D
 
 # ─────────── GAME SETTINGS YOU CAN ADJUST ───────────
 @export var move_speed: float = 100.0  # How many pixels per second the player moves
+const SPRITE_FLIP_OFFSET: int = -1     # Visual centering offset when sprite is flipped left
 
 # ─────────── LIVE INFORMATION THAT CHANGES DURING PLAY ───────────
 var direction: Vector2 = Vector2.ZERO  # Which way the player is trying to move (WASD input)
@@ -102,9 +103,9 @@ func update_facing():
 	# Flip the sprite horizontally when facing left (mirror image)
 	sprite.flip_h = (facing == Vector2.LEFT)
 	
-	# When flipped, add 1 pixel offset to fix visual centering
+	# When flipped, add offset to fix visual centering
 	if facing == Vector2.LEFT:
-		sprite.offset.x = -1
+		sprite.offset.x = SPRITE_FLIP_OFFSET
 	else:
 		sprite.offset.x = 0
 

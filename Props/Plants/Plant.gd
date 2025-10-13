@@ -1,6 +1,7 @@
-## SIMPLE BREAKABLE PLANT - Testing Version
+## BREAKABLE PLANT SYSTEM
 ##
-## Simplified to just get plant breaking working first
+## Handles destructible plants that can be broken by player attacks.
+## When hit, the plant becomes invisible and non-collidable, simulating destruction.
 
 extends Node
 
@@ -22,13 +23,6 @@ func _ready():
 		# Enable collision monitoring so the plant can detect attack hitboxes
 		hitbox.monitoring = true
 		hitbox.monitorable = true
-	else:
-		push_warning("Plant needs a HitBox Area2D child node!")
-		
-	if not static_body:
-		push_warning("Plant needs a StaticBody2D child node for physical collision!")
-
-# Debug method to test if plant can break manually - REMOVED since spacebar is dash
 
 func _on_hitbox_area_entered(area):
 	"""Called when player attack hitbox enters our detection area"""

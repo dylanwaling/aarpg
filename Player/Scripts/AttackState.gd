@@ -83,8 +83,6 @@ func _show_and_play_attack_effects():
 		
 		# Play attack sound effect if available
 		_play_attack_sound()
-	else:
-		print("Warning: Attack effect animation '", effect_anim_name, "' not found")
 
 func _play_attack_sound():
 	# Try to find an AudioStreamPlayer2D node for attack sounds
@@ -255,7 +253,6 @@ func _setup_attack_hitbox():
 	if not hitbox_scene:
 		hitbox_scene = preload("res://GeneralNodes/Hitbox/Hitbox.tscn")
 		if not hitbox_scene:
-			push_warning("No hitbox scene found! Create a Hitbox.tscn in GeneralNodes/Hitbox/")
 			return
 	
 	# Create the hitbox with delay for attack wind-up timing

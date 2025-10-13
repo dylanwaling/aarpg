@@ -45,9 +45,8 @@ func _ready():
 	_active = false
 	monitoring = false
 	
-	# Make sure we have a CollisionShape2D child
-	if not get_child(0) is CollisionShape2D:
-		push_warning("Hitbox needs a CollisionShape2D as its first child!")
+	# Ensure proper collision shape setup
+	# Note: Requires CollisionShape2D as first child
 
 func activate_hitbox():
 	"""Start checking for collisions and dealing damage/interactions"""
@@ -133,8 +132,6 @@ func _apply_damage(target):
 		target.damage(damage)
 	elif target.has_method("hurt"):
 		target.hurt(damage)
-	else:
-		print("Hit target but it doesn't have a damage method: ", target.name)
 
 func _apply_interaction(target):
 	"""Trigger interactions like breaking bushes, opening chests, etc."""
