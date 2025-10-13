@@ -234,7 +234,7 @@ height = 18.0
 
 [node name="Slime" type="CharacterBody2D"]
 collision_layer = 1024
-collision_mask = 32
+collision_mask = 2
 script = ExtResource("1_puctb")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -259,7 +259,7 @@ libraries = {
 
 [node name="HitBox" type="Area2D" parent="."]
 collision_layer = 2048
-collision_mask = 0
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitBox"]
 visible = false

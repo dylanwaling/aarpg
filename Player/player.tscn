@@ -313,7 +313,7 @@ _data = {
 size = Vector2(33, 44)
 
 [node name="Player" type="CharacterBody2D"]
-collision_mask = 32
+collision_mask = 2
 motion_mode = 1
 wall_min_slide_angle = 0.13962634
 script = ExtResource("1_j23h2")
@@ -355,7 +355,7 @@ libraries = {
 
 [node name="HurtBox" type="Area2D" parent="."]
 collision_layer = 2
-collision_mask = 0
+collision_mask = 4096
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HurtBox"]
 position = Vector2(-1.5, -21)

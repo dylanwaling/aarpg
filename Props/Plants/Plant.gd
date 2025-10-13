@@ -23,8 +23,11 @@ func _ready():
 
 func _on_hitbox_area_entered(area):
 	"""Called when player attack hitbox enters our detection area"""
+	print("Plant detected area entering: ", area.name, " has activate_hitbox: ", area.has_method("activate_hitbox"), " damage: ", area.get("damage"))
+	
 	# Check if the area is an attack hitbox with damage capability
 	if area.has_method("activate_hitbox") and area.get("damage") != null:
+		print("Plant taking damage from: ", area.name, " damage: ", area.damage)
 		# This is a valid attack hitbox - break the plant
 		break_plant()
 

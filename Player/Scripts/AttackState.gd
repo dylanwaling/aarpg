@@ -276,8 +276,8 @@ func _create_damage_hitbox():
 	_current_hitbox.hit_duration = hitbox_duration
 	_current_hitbox.hit_type = _current_hitbox.HitType.COMBO
 	
-	# NOTE: Collision layers and masks are set in the Hitbox.tscn scene in the UI
-	# This respects your preference to keep collision settings in the inspector
+	# Set up collision layers for player attacks
+	_current_hitbox.setup_player_attack(attack_damage, knockback_strength)
 	
 	# Activate the hitbox to start damage detection
 	_current_hitbox.activate_hitbox()

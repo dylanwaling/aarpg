@@ -55,6 +55,9 @@ func activate_hitbox():
 	_hit_targets.clear()  # Reset hit list for fresh activation
 	_time_left = hit_duration
 	
+	# Debug: Print collision setup
+	print("Hitbox activated - Layer: ", collision_layer, " Mask: ", collision_mask, " Can hit layers: ", can_hit_layers)
+	
 	# Auto-deactivate after duration
 	if hit_duration > 0:
 		await get_tree().create_timer(hit_duration).timeout
@@ -85,19 +88,19 @@ func _on_body_entered(body):
 
 func _on_area_entered(area):
 	"""Called when an Area2D (like another hitbox or hurtbox) enters"""
+	print("Hitbox area_entered detected: ", area.name, " active: ", _active)
+	
 	if not _active:
-		return
-		
-	# Check if this area is on a layer we can interact with
-	var area_layer = _get_area_collision_layer(area)
-	if not area_layer in can_hit_layers:
+		print("Hitbox not active, ignoring")
 		return
 		
 	# Don't hit the same target twice
 	if area in _hit_targets:
+		print("Area already hit, ignoring")
 		return
 		
-	# Process the hit
+	# Process the hit - let the _process_hit method handle targeting
+	print("Processing hit on: ", area.name)
 	_process_hit(area)
 
 # ─────────── HIT PROCESSING ───────────
@@ -125,24 +128,57 @@ func _process_hit(target):
 
 func _apply_damage(target):
 	"""Deal damage to the target if it can take damage"""
+	print("Applying damage to: ", target.name)
+	
+	# Try to find the actual entity (parent node) that should receive damage
+	var entity = target
+	if target.name == "HitBox" and target.get_parent():
+		entity = target.get_parent()
+		print("Found parent entity for damage: ", entity.name)
+	
 	# Look for common health/damage methods
-	if target.has_method("take_damage"):
-		target.take_damage(damage, global_position)
-	elif target.has_method("damage"):
-		target.damage(damage)
-	elif target.has_method("hurt"):
-		target.hurt(damage)
+	if entity.has_method("take_damage"):
+		print("Calling take_damage() on: ", entity.name)
+		entity.take_damage(damage, global_position)
+	elif entity.has_method("damage"):
+		print("Calling damage() on: ", entity.name)
+		entity.damage(damage)
+	elif entity.has_method("hurt"):
+		print("Calling hurt() on: ", entity.name)
+		entity.hurt(damage)
+	else:
+		print("No damage method found for: ", entity.name)
 
 func _apply_interaction(target):
 	"""Trigger interactions like breaking bushes, opening chests, etc."""
-	if target.has_method("interact"):
-		target.interact()
-	elif target.has_method("break"):
-		target.break()
-	elif target.has_method("activate"):
-		target.activate()
-	elif target.has_method("destroy"):
-		target.destroy()
+	print("Applying interaction to: ", target.name)
+	
+	# Try to find the actual entity (parent node) that should receive the interaction
+	var entity = target
+	if target.name == "HitBox" and target.get_parent():
+		entity = target.get_parent()
+		print("Found parent entity: ", entity.name)
+	
+	if entity.has_method("interact"):
+		print("Calling interact() on: ", entity.name)
+		entity.interact()
+	elif entity.has_method("break_plant"):
+		print("Calling break_plant() on: ", entity.name)
+		entity.break_plant()
+	elif entity.has_method("break"):
+		print("Calling break() on: ", entity.name)
+		entity.break()
+	elif entity.has_method("take_damage"):
+		print("Calling take_damage() on: ", entity.name)
+		entity.take_damage(damage)
+	elif entity.has_method("activate"):
+		print("Calling activate() on: ", entity.name)
+		entity.activate()
+	elif entity.has_method("destroy"):
+		print("Calling destroy() on: ", entity.name)
+		entity.destroy()
+	else:
+		print("No interaction method found for: ", entity.name, " (type: ", entity.get_class(), ")")
 
 func _apply_knockback(target):
 	"""Push the target away from the hitbox"""
@@ -186,8 +222,14 @@ func setup_player_attack(attack_damage: int = 10, knockback: float = 50.0):
 	damage = attack_damage
 	knockback_force = knockback
 	hitbox_owner_layer = 3  # PlayerAttacks layer
-	can_hit_layers = [12, 7]  # Hit EnemyHurtBox + Breakables  
+	can_hit_layers = [12, 7, 6]  # Hit EnemyHurtBox + Breakables + Plants
 	hit_type = HitType.COMBO
+	
+	# Set collision layers and masks to match what we can hit
+	collision_layer = 1 << (hitbox_owner_layer - 1)  # Set our layer
+	collision_mask = 0
+	for layer in can_hit_layers:
+		collision_mask |= 1 << (layer - 1)  # Set mask for layers we can hit
 
 func setup_enemy_attack(attack_damage: int = 5, knockback: float = 75.0):
 	"""Quick setup for enemy attack hitboxes"""
@@ -222,12 +264,21 @@ func setup_as_hitbox(owner_type: String, damage_amount: int = 0):
 	if owner_type == "player":
 		hitbox_owner_layer = 2      # PlayerHurtBox layer
 		can_hit_layers = []         # Doesn't actively hit anything - just receives
+		# Set collision layer for player so enemy attacks can hit them
+		collision_layer = 1 << (hitbox_owner_layer - 1)
+		collision_mask = 0  # Player hitboxes don't hit anything, they receive damage
 	elif owner_type == "enemy":
 		hitbox_owner_layer = 12     # EnemyHurtBox layer  
 		can_hit_layers = []         # Doesn't actively hit anything - just receives
+		# Set collision layer for enemies so player attacks can hit them
+		collision_layer = 1 << (hitbox_owner_layer - 1)
+		collision_mask = 0  # Enemy hitboxes don't hit anything, they receive damage
 	elif owner_type == "plant":
-		hitbox_owner_layer = 7      # Breakables layer
+		hitbox_owner_layer = 6      # Plants layer (different from general breakables)
 		can_hit_layers = []         # Doesn't actively hit anything - just receives
+		# Set collision layer for plants so player attacks can hit them
+		collision_layer = 1 << (hitbox_owner_layer - 1)
+		collision_mask = 0  # Plants don't hit anything
 
 func setup_as_hurtbox(owner_type: String, damage_amount: int = 5, knockback: float = 50.0):
 	"""Configure this as a HURTBOX - where the character HURTS OTHERS

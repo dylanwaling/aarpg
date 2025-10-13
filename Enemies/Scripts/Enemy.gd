@@ -102,8 +102,11 @@ func die():
 
 func _on_hitbox_area_entered(area):
 	"""Called when something enters our hitbox (like player attacks)"""
+	print("Enemy detected area entering: ", area.name, " has activate_hitbox: ", area.has_method("activate_hitbox"), " damage: ", area.get("damage"))
+	
 	# Check if it's a player attack hitbox
 	if area.has_method("activate_hitbox") and area.get("damage") != null:
+		print("Enemy taking damage from: ", area.name, " damage: ", area.damage)
 		# This is a valid attack hitbox - take damage
 		take_damage(area.damage)
 
