@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://be880rni4jo7s"]
+[gd_scene load_steps=21 format=3 uid="uid://be880rni4jo7s"]
 
 [ext_resource type="Texture2D" uid="uid://d1kd7q3k48wwr" path="res://Player/Sprites/Shadow.png" id="1_0ae7n"]
 [ext_resource type="Script" uid="uid://whwmrcmthjj6" path="res://Enemies/Scripts/Enemy.gd" id="1_puctb"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://bgrkyxajfu668" path="res://Enemies/Scripts/EnemyAttackState.gd" id="6_3of0s"]
 [ext_resource type="Script" uid="uid://celvshpbpemhd" path="res://Enemies/Scripts/EnemyChaseState.gd" id="7_suwpu"]
 [ext_resource type="Script" uid="uid://dut6o4kfodoh2" path="res://Enemies/Scripts/EnemyWanderState.gd" id="8_dkpye"]
+[ext_resource type="PackedScene" uid="uid://bqqeepb7e0e8d" path="res://GeneralNodes/Health/Health2.tscn" id="9_3of0s"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mjfjn"]
 radius = 6.0
@@ -294,3 +295,5 @@ script = ExtResource("7_suwpu")
 
 [node name="EnemyWanderState" type="Node" parent="States"]
 script = ExtResource("8_dkpye")
+
+[node name="Health" parent="." instance=ExtResource("9_3of0s")]

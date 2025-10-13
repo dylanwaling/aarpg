@@ -14,10 +14,6 @@ extends CharacterBody2D
 # ─────────── GAME SETTINGS YOU CAN ADJUST ───────────
 @export var move_speed: float = 100.0  # How many pixels per second the player moves
 
-# ── PLAYER STATS (EASY TO ADJUST) ──
-@export var max_health: int = 100      # Maximum health points
-@export var current_health: int = 100  # Current health (will be damaged by enemies)
-
 const SPRITE_FLIP_OFFSET: int = -1     # Visual centering offset when sprite is flipped left
 
 # ─────────── LIVE INFORMATION THAT CHANGES DURING PLAY ───────────
@@ -28,6 +24,7 @@ var current           = null           # Which state is currently controlling th
 # ─────────── CONNECTIONS TO CHILD NODES IN THE SCENE ───────────
 @onready var sprite: Sprite2D        = $Sprite2D        # The visual player sprite (gets flipped left/right)
 @onready var anim: AnimationPlayer   = $AnimationPlayer # Controls all player animations (walk, idle, attack)
+@onready var health_component: Node2D = $Health         # The health management component
 @onready var idle_state              = $States/IdleState    # Handles when player is standing still
 @onready var walk_state              = $States/WalkState   # Handles when player is moving around
 @onready var attack_state            = $States/AttackState # Handles when player is attacking
@@ -45,6 +42,11 @@ func _ready():
 
 	# Add player to group so enemies can find us
 	add_to_group("player")
+
+	# Connect to health events
+	if health_component:
+		health_component.died.connect(_on_health_died)
+		health_component.health_changed.connect(_on_health_changed)
 
 	# Note: HurtBox uses its own script - setup handled there
 
@@ -135,23 +137,17 @@ func play_anim(state_name: String):
 		anim.play(anim_name)
 
 # ─────────── HEALTH SYSTEM ───────────
-func take_damage(amount: int):
+func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	"""Called when enemies or hazards damage the player"""
-	current_health -= amount
-	current_health = max(0, current_health)  # Don't go below 0
-	
-	print("Player took ", amount, " damage! Health: ", current_health, "/", max_health)
-	
-	if current_health <= 0:
-		die()
+	if health_component:
+		health_component.take_damage(amount)
 
 func heal(amount: int):
 	"""Restore player health (for potions, etc.)"""
-	current_health += amount
-	current_health = min(max_health, current_health)  # Don't exceed max
-	print("Player healed ", amount, " health! Health: ", current_health, "/", max_health)
+	if health_component:
+		health_component.heal(amount)
 
-func die():
+func _on_health_died():
 	"""Handle player death"""
 	print("Player died!")
 	# You can add death logic here:
@@ -159,4 +155,13 @@ func die():
 	# - Show game over screen
 	# - Respawn at checkpoint
 	# For now, just reset health
-	current_health = max_health
+	if health_component:
+		health_component.reset_health()
+
+func _on_health_changed(_new_health: int, _max_health: int):
+	"""React to health changes"""
+	# You can add effects here:
+	# - Screen flash when damaged
+	# - Update UI health bar
+	# - Play hurt sounds
+	pass

@@ -15,7 +15,6 @@ extends CharacterBody2D
 @export var move_speed: float = 60.0           # How many pixels per second the enemy moves (slower than player)
 
 # ── COMBAT STATS (EASY TO ADJUST) ──
-@export var health: int = 50                    # How many hits the enemy can take before dying
 @export var damage: int = 1                    # How much damage this enemy deals to the player
 
 # ── AI BEHAVIOR SETTINGS ──
@@ -35,7 +34,7 @@ var is_dead: bool = false                      # Whether this enemy has been def
 @onready var anim: AnimationPlayer   = $AnimationPlayer   # Controls all enemy animations (walk, idle, attack)
 @onready var hitbox: Area2D          = $HitBox           # Takes damage from player attacks
 @onready var hurtbox: Area2D         = $HurtBox          # Deals damage to player (if enemy can attack)
-@onready var health_label: Label     = null              # Health display (created dynamically)
+@onready var health_component: Node2D = $Health          # The health management component
 @onready var idle_state              = $States/EnemyIdleState     # Handles when enemy is standing still
 @onready var wander_state            = $States/EnemyWanderState   # Handles when enemy is wandering around
 @onready var walk_state              = $States/EnemyWalkState     # Handles when enemy is moving around
@@ -60,8 +59,10 @@ func _ready():
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
 	
-	# Create health display for debugging
-	_create_health_display()
+	# Connect to health events
+	if health_component:
+		health_component.died.connect(_on_health_died)
+		health_component.health_changed.connect(_on_health_changed)
 	
 	# Start in Idle mode
 	change_state(idle_state)
@@ -100,28 +101,28 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	if is_dead:
 		return
 		
-	# Subtract damage from health
-	health -= amount
-	
-	# Update health display
-	_update_health_display()
-	
-	# Check if enemy should die
-	if health <= 0:
-		die()
-	else:
-		# Enemy survived - you can add hurt effects here:
-		# - Play hurt animation
-		# - Flash red color
-		# - Play hurt sound
-		# - Apply knockback
-		pass
+	if health_component:
+		health_component.take_damage(amount)
+		
+	# Add hurt effects here:
+	# - Play hurt animation
+	# - Flash red color
+	# - Play hurt sound
+	# - Apply knockback
 
-func die():
+func _on_health_died():
 	"""Handle enemy death - play death animation, drop items, etc."""
 	is_dead = true
 	# For now, just remove the enemy
 	queue_free()
+
+func _on_health_changed(_new_health: int, _max_health: int):
+	"""React to health changes"""
+	# You can add effects here:
+	# - Hurt animations
+	# - Color flashing
+	# - Damage numbers
+	pass
 
 func _on_hitbox_area_entered(_area):
 	"""Called when something enters our hitbox (like player attacks)"""
@@ -200,25 +201,4 @@ func play_anim(state_name: String):
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
 
-# ─────────── HEALTH DISPLAY (DEBUG) ───────────
-func _create_health_display():
-	"""Create a simple red health number above the enemy"""
-	health_label = Label.new()
-	add_child(health_label)
-	
-	# Position centered horizontally, above the slime's head
-	health_label.position = Vector2(-5, 4)
-	health_label.anchor_left = 0.5
-	health_label.anchor_right = 0.5
-	
-	# Simple red text, smaller font
-	health_label.add_theme_color_override("font_color", Color.RED)
-	health_label.add_theme_font_size_override("font_size", 8)
-	
-	# Set initial health text
-	health_label.text = str(health)
 
-func _update_health_display():
-	"""Update the health number when health changes"""
-	if health_label:
-		health_label.text = str(health)

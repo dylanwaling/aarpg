@@ -5,14 +5,14 @@
 
 extends Node
 
-# ── PLANT STATS (EASY TO ADJUST) ──
-@export var health: int = 1                    # How many hits needed to break the plant
+# ── PLANT STATS ──
 var is_broken: bool = false
 
 # Node references  
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var hitbox: Area2D = $HitBox  
 @onready var static_body: StaticBody2D = $StaticBody2D
+@onready var health_component: Node2D = $Health     # The health management component
 
 func _ready():
 		# Set up hitbox to detect when player attacks hit us
@@ -20,6 +20,12 @@ func _ready():
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
 		hitbox.monitoring = true
 		hitbox.monitorable = true
+	
+	# Connect to health events and set plant-specific health
+	if health_component:
+		health_component.max_health = 1
+		health_component.reset_health()  # This sets current_health to max_health (1)
+		health_component.died.connect(_on_health_died)
 
 func _on_hitbox_area_entered(area):
 	"""Called when player attack hitbox enters our detection area"""
@@ -34,6 +40,10 @@ func break_plant():
 		return
 		
 	is_broken = true
+	
+	# Update health component (deal enough damage to kill it)
+	if health_component and health_component.is_alive():
+		health_component.take_damage(health_component.get_health())
 	
 	# Hide the plant sprite
 	if sprite:
@@ -62,6 +72,10 @@ func respawn_plant():
 	"""Restore the plant to its original state after being broken"""
 	is_broken = false
 	
+	# Reset health component
+	if health_component:
+		health_component.reset_health()
+	
 	# Make the plant visible again
 	if sprite:
 		sprite.visible = true
@@ -85,3 +99,9 @@ func respawn_plant():
 func take_damage(_amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	"""Alternative method for damage - breaks the plant regardless of damage amount"""
 	break_plant()
+
+func _on_health_died():
+	"""Called when health component reaches 0"""
+	# Additional death effects can go here
+	# The visual hiding is already handled in break_plant()
+	pass

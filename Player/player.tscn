@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://bf4esf57fcnh8"]
+[gd_scene load_steps=28 format=3 uid="uid://bf4esf57fcnh8"]
 
 [ext_resource type="Texture2D" uid="uid://o3e3kn504do0" path="res://Player/Sprites/PlayerSprite02.png" id="1_btcbx"]
 [ext_resource type="Script" uid="uid://dea0ldwa8lkts" path="res://Player/Scripts/Player.gd" id="1_j23h2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://hdq0d4xkdg1t" path="res://Player/Scripts/WalkState.gd" id="3_gwnis"]
 [ext_resource type="Script" uid="uid://b761552yeb8ov" path="res://Player/Scripts/AttackState.gd" id="4_gwnis"]
 [ext_resource type="Script" uid="uid://xe7ts6lhkvky" path="res://Player/Scripts/DashState.gd" id="7_vtle1"]
+[ext_resource type="PackedScene" uid="uid://bqqeepb7e0e8d" path="res://GeneralNodes/Health/Health2.tscn" id="9_j23h2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_edjgo"]
 
@@ -374,3 +375,5 @@ script = ExtResource("4_gwnis")
 
 [node name="DashState" type="Node" parent="States"]
 script = ExtResource("7_vtle1")
+
+[node name="Health" parent="." instance=ExtResource("9_j23h2")]
