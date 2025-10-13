@@ -4,3 +4,8 @@
 
 [node name="Health" type="Node2D"]
 script = ExtResource("1_0x4mt")
+
+[node name="HealthLabel" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "100"

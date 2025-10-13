@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://d2x1l5c2qtqrn" path="res://Props/Plants/Plant.gd" id="1_akllp"]
 [ext_resource type="Texture2D" uid="uid://b7n07ua02bubd" path="res://Props/Sprites/Props.png" id="1_e71d2"]
 [ext_resource type="PackedScene" uid="uid://dlg0dema0uf3w" path="res://GeneralNodes/Hitbox/HitBox.tscn" id="2_akllp"]
-[ext_resource type="PackedScene" uid="uid://bqqeepb7e0e8d" path="res://GeneralNodes/Health/Health2.tscn" id="4_w3sfv"]
+[ext_resource type="PackedScene" uid="uid://bqqeepb7e0e8d" path="res://GeneralNodes/Health/Health.tscn" id="4_w3sfv"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_akllp"]
 size = Vector2(30, 31)
@@ -40,3 +40,4 @@ position = Vector2(0, 9)
 shape = SubResource("RectangleShape2D_w3sfv")
 
 [node name="Health" parent="." instance=ExtResource("4_w3sfv")]
+position = Vector2(-14, 4)

@@ -8,7 +8,7 @@
 [ext_resource type="Script" uid="uid://hdq0d4xkdg1t" path="res://Player/Scripts/WalkState.gd" id="3_gwnis"]
 [ext_resource type="Script" uid="uid://b761552yeb8ov" path="res://Player/Scripts/AttackState.gd" id="4_gwnis"]
 [ext_resource type="Script" uid="uid://xe7ts6lhkvky" path="res://Player/Scripts/DashState.gd" id="7_vtle1"]
-[ext_resource type="PackedScene" uid="uid://bqqeepb7e0e8d" path="res://GeneralNodes/Health/Health2.tscn" id="9_j23h2"]
+[ext_resource type="PackedScene" uid="uid://bqqeepb7e0e8d" path="res://GeneralNodes/Health/Health.tscn" id="9_j23h2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_edjgo"]
 
@@ -377,3 +377,4 @@ script = ExtResource("4_gwnis")
 script = ExtResource("7_vtle1")
 
 [node name="Health" parent="." instance=ExtResource("9_j23h2")]
+position = Vector2(-14, 0)
