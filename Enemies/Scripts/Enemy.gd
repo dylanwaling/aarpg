@@ -51,6 +51,12 @@ func _ready():
 		hitbox.monitoring = true
 		hitbox.monitorable = true
 
+	# Add enemy to group for debugging
+	add_to_group("enemy")
+	
+	# Debug collision settings
+	print("Enemy collision - Layer: ", collision_layer, " Mask: ", collision_mask)
+	
 	# Start in Idle mode
 	change_state(idle_state)
 
@@ -66,6 +72,7 @@ func _physics_process(dt):
 	# Let the current state handle physics stuff (like setting velocity)
 	if current:
 		current.physics_update(dt)
+	
 	# Actually move the enemy based on the velocity that was set
 	move_and_slide()
 
