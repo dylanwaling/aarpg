@@ -44,8 +44,8 @@ func break_plant():
 		
 	# Disable hitbox collision detection so it can't be hit again
 	if hitbox:
-		hitbox.monitoring = false
-		hitbox.monitorable = false
+		hitbox.set_deferred("monitoring", false)
+		hitbox.set_deferred("monitorable", false)
 		
 	# Disable static body collision so player can walk through
 	if static_body:
@@ -71,8 +71,8 @@ func respawn_plant():
 		
 	# Re-enable hitbox collision detection so it can be hit again
 	if hitbox:
-		hitbox.monitoring = true
-		hitbox.monitorable = true
+		hitbox.set_deferred("monitoring", true)
+		hitbox.set_deferred("monitorable", true)
 		
 	# Re-enable static body collision so it blocks player movement
 	if static_body:
