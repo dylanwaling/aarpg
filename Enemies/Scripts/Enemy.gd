@@ -15,7 +15,7 @@ extends CharacterBody2D
 @export var move_speed: float = 60.0           # How many pixels per second the enemy moves (slower than player)
 
 # ── COMBAT STATS (EASY TO ADJUST) ──
-@export var damage: int = 1                    # How much damage this enemy deals to the player
+@export var damage: int = 10                   # How much damage this enemy deals to the player
 
 # ── AI BEHAVIOR SETTINGS ──
 @export var detection_range: float = 100.0     # How close the player needs to be for enemy to notice
@@ -55,6 +55,13 @@ func _ready():
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
 		hitbox.monitoring = true
 		hitbox.monitorable = true
+
+	# Set up hurtbox to deal damage to player when they touch us
+	if hurtbox:
+		hurtbox.body_entered.connect(_on_hurtbox_body_entered)
+		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+		hurtbox.monitoring = false  # Start disabled, enable during attacks
+		hurtbox.monitorable = true
 
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
@@ -133,6 +140,19 @@ func _on_hitbox_area_entered(_area):
 	# - Particle effects
 	# - UI damage numbers
 	pass
+
+func _on_hurtbox_body_entered(body):
+	"""Called when player's CharacterBody2D touches our hurtbox"""
+	if body.has_method("take_damage") and body.is_in_group("player"):
+		print("Enemy dealing ", damage, " damage to player")  # Debug line
+		body.take_damage(damage, global_position)
+
+func _on_hurtbox_area_entered(area):
+	"""Called when player's Area2D (like their hitbox) touches our hurtbox"""
+	# Try to find the player parent node
+	var player_node = area.get_parent()
+	if player_node and player_node.has_method("take_damage") and player_node.is_in_group("player"):
+		player_node.take_damage(damage, global_position)
 
 # ─────────── AI HELPER FUNCTIONS ───────────
 func distance_to_player() -> float:

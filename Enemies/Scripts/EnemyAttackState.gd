@@ -48,13 +48,9 @@ func update(dt):
 	
 	# When attack is finished, decide what to do next
 	if _time_left <= 0.0:
-		# Attack finished - check if player is still nearby
-		if enemy.can_see_player():
-			# Player still in range, go back to chasing
-			enemy.change_state(enemy.chase_state)
-		else:
-			# Player is gone, go back to wandering
-			enemy.change_state(enemy.wander_state)
+		# Always go to idle after attack to prevent immediate re-attacking
+		enemy.change_state(enemy.idle_state)
+		return
 
 func physics_update(_dt):
 	# Stay still during attack (if stop_movement is true)
@@ -81,3 +77,14 @@ func _deactivate_attack_hitbox():
 func exit(_to):
 	# Make sure hitbox is disabled when leaving attack state
 	_deactivate_attack_hitbox()
+	
+	# Add a brief cooldown before the enemy can attack again
+	# This prevents the attack-chase-attack loop
+	if _to == enemy.chase_state:
+		# Go to idle briefly instead of immediately chasing again
+		enemy.change_state(enemy.idle_state)
+		# Set a timer to resume chasing after cooldown
+		get_tree().create_timer(attack_cooldown).timeout.connect(func(): 
+			if enemy.can_see_player():
+				enemy.change_state(enemy.chase_state)
+		)

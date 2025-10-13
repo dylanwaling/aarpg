@@ -1,9 +1,11 @@
-[gd_scene load_steps=21 format=3 uid="uid://be880rni4jo7s"]
+[gd_scene load_steps=23 format=3 uid="uid://be880rni4jo7s"]
 
 [ext_resource type="Texture2D" uid="uid://d1kd7q3k48wwr" path="res://Player/Sprites/Shadow.png" id="1_0ae7n"]
 [ext_resource type="Script" uid="uid://whwmrcmthjj6" path="res://Enemies/Scripts/Enemy.gd" id="1_puctb"]
 [ext_resource type="Texture2D" uid="uid://lgshoql8fatw" path="res://Enemies/Slime/Slime.png" id="2_wyclx"]
+[ext_resource type="Script" uid="uid://dqrt2g35b4rvt" path="res://GeneralNodes/Hitbox/Hitbox.gd" id="3_wyclx"]
 [ext_resource type="Script" uid="uid://ww3f7tce64wm" path="res://Enemies/Scripts/EnemyIdleState.gd" id="4_puctb"]
+[ext_resource type="Script" uid="uid://dq4wfb6ceho5w" path="res://GeneralNodes/Hurtbox/HurtBox.gd" id="5_5fs0k"]
 [ext_resource type="Script" uid="uid://cqniioe2llu4l" path="res://Enemies/Scripts/EnemyWalkState.gd" id="5_dkpye"]
 [ext_resource type="Script" uid="uid://bgrkyxajfu668" path="res://Enemies/Scripts/EnemyAttackState.gd" id="6_3of0s"]
 [ext_resource type="Script" uid="uid://celvshpbpemhd" path="res://Enemies/Scripts/EnemyChaseState.gd" id="7_suwpu"]
@@ -261,7 +263,8 @@ libraries = {
 
 [node name="HitBox" type="Area2D" parent="."]
 collision_layer = 2048
-collision_mask = 4
+collision_mask = 2
+script = ExtResource("3_wyclx")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitBox"]
 visible = false
@@ -270,9 +273,9 @@ rotation = 1.5707964
 shape = SubResource("CapsuleShape2D_qsqqn")
 
 [node name="HurtBox" type="Area2D" parent="."]
-collision_layer = 4096
+collision_layer = 2048
 collision_mask = 2
-monitorable = false
+script = ExtResource("5_5fs0k")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HurtBox"]
 position = Vector2(0, -7)
@@ -297,4 +300,4 @@ script = ExtResource("7_suwpu")
 script = ExtResource("8_dkpye")
 
 [node name="Health" parent="." instance=ExtResource("9_3of0s")]
-position = Vector2(-14, 1)
+position = Vector2(0, 12)
