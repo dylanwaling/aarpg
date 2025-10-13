@@ -56,6 +56,9 @@ func _physics_process(dt):
 		current.physics_update(dt)
 	# Actually move the player based on the velocity that was set
 	move_and_slide()
+	
+	# Round position to prevent pixel wobble/background glitching
+	global_position = Vector2(round(global_position.x), round(global_position.y))
 
 # ─────────── WHEN KEYS ARE PRESSED OR RELEASED ───────────
 func _unhandled_input(event):
