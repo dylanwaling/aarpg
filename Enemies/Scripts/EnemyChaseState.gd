@@ -30,8 +30,8 @@ func update(_dt):
 	# Check if player has gotten too far away (give up chase)
 	var distance = enemy.distance_to_player()
 	if distance > enemy.detection_range * 1.5:  # Buffer zone to prevent flickering
-		# Player escaped! Go back to idle
-		enemy.change_state(enemy.idle_state)
+		# Player escaped! Go back to wandering
+		enemy.change_state(enemy.wander_state)
 		return
 
 func physics_update(_dt):

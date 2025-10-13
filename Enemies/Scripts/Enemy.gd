@@ -32,6 +32,7 @@ var is_dead: bool = false                      # Whether this enemy has been def
 @onready var hitbox: Area2D          = $HitBox           # Takes damage from player attacks
 @onready var hurtbox: Area2D         = $HurtBox          # Deals damage to player (if enemy can attack)
 @onready var idle_state              = $States/EnemyIdleState     # Handles when enemy is standing still
+@onready var wander_state            = $States/EnemyWanderState   # Handles when enemy is wandering around
 @onready var walk_state              = $States/EnemyWalkState     # Handles when enemy is moving around
 @onready var chase_state             = $States/EnemyChaseState    # Handles when enemy is chasing the player
 @onready var attack_state            = $States/EnemyAttackState   # Handles when enemy is attacking

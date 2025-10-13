@@ -53,8 +53,8 @@ func update(dt):
 			# Player still in range, go back to chasing
 			enemy.change_state(enemy.chase_state)
 		else:
-			# Player is gone, go back to idle
-			enemy.change_state(enemy.idle_state)
+			# Player is gone, go back to wandering
+			enemy.change_state(enemy.wander_state)
 
 func physics_update(_dt):
 	# Stay still during attack (if stop_movement is true)

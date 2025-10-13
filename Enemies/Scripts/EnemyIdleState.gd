@@ -1,29 +1,46 @@
-## ENEMY IDLE STATE - When the Enemy is Just Standing Around
+## ENEMY IDLE STATE - Brief Pause Before Wandering
 ##
-## This is the "default" state when the enemy isn't doing anything special.
-## The enemy is just standing there, playing their idle animation, and watching for the player.
+## This is a short transitional state when the enemy first spawns or after losing the player.
+## The enemy stands still briefly, then starts wandering around randomly.
 ##
 ## What it does:
-## - Stops the enemy from moving (sets velocity to zero)
+## - Stops the enemy from moving (sets velocity to zero)  
 ## - Plays the idle animation that matches which direction they're facing
 ## - Constantly checks if the player comes within detection range
 ## - Switches to chase state when player gets too close
+## - Transitions to wander state after a short delay
 ##
-## It's like the "home base" state that other enemy states return to when they're done.
+## This creates a brief "looking around" moment before the enemy starts patrolling.
 
 class_name EnemyIdleState
 extends "res://Enemies/Scripts/EnemyState.gd"
+
+# ─────────── IDLE BEHAVIOR SETTINGS ───────────
+@export var idle_duration: float = 1.5              # How long to stay idle before wandering
+
+# ─────────── INTERNAL TRACKING ───────────
+var _idle_timer: float = 0.0                        # Countdown timer for idle duration
 
 func enter(_from):
 	# Stop the enemy from moving and play the standing animation
 	enemy.velocity = Vector2.ZERO
 	enemy.play_anim("idle")
+	
+	# Start the idle timer
+	_idle_timer = idle_duration
 
-func update(_dt):
-	# Constantly check if the player has come within detection range
+func update(dt):
+	# Always check if the player has come within detection range
 	if enemy.can_see_player():
 		# Player spotted! Switch to chase mode
 		enemy.change_state(enemy.chase_state)
+		return
+	
+	# Count down idle timer
+	_idle_timer -= dt
+	if _idle_timer <= 0.0:
+		# Idle period finished - start wandering
+		enemy.change_state(enemy.wander_state)
 
 func physics_update(_dt):
 	# Stay still during idle
