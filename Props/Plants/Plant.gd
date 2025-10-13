@@ -15,12 +15,9 @@ var is_broken: bool = false
 @onready var static_body: StaticBody2D = $StaticBody2D
 
 func _ready():
-	# Set up initial plant state and collision detection
+		# Set up hitbox to detect when player attacks hit us
 	if hitbox:
-		# Connect signal to detect when player attacks hit the plant
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
-		
-		# Enable collision monitoring so the plant can detect attack hitboxes
 		hitbox.monitoring = true
 		hitbox.monitorable = true
 

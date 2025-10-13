@@ -38,6 +38,11 @@ func _ready():
 	var attack_fx_sprite = $Sprite2D/AttackFX/AttackEffectsSprite
 	attack_fx_sprite.visible = false
 
+	# Add player to group so enemies can find us
+	add_to_group("player")
+
+	# Note: HurtBox uses its own script - setup handled there
+
 	# Start in Idle mode
 	change_state(idle_state)
 

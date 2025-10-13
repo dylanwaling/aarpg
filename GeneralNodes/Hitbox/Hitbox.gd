@@ -185,8 +185,8 @@ func setup_player_attack(attack_damage: int = 10, knockback: float = 50.0):
 	"""Quick setup for player attack hitboxes"""
 	damage = attack_damage
 	knockback_force = knockback
-	hitbox_owner_layer = 1
-	can_hit_layers = [9]  # Hit enemies
+	hitbox_owner_layer = 3  # PlayerAttacks layer
+	can_hit_layers = [12, 7]  # Hit EnemyHurtBox + Breakables  
 	hit_type = HitType.COMBO
 
 func setup_enemy_attack(attack_damage: int = 5, knockback: float = 75.0):
@@ -204,3 +204,64 @@ func setup_environmental_interaction():
 	hitbox_owner_layer = 1
 	can_hit_layers = [10]  # You can add layer 10 for breakables
 	hit_type = HitType.INTERACT
+
+# ─────────── HITBOX & HURTBOX SETUP METHODS ───────────
+func setup_as_hitbox(owner_type: String, damage_amount: int = 0):
+	"""Configure this as a HITBOX - where the character CAN BE HIT
+	
+	owner_type: 'player' or 'enemy' or 'plant'
+	damage_amount: how much damage this deals (usually 0 for hitboxes that just receive damage)
+	"""
+	damage = damage_amount
+	knockback_force = 0
+	hit_type = HitType.INTERACT  # Use INTERACT so it calls take_damage methods
+	monitoring = true      # Can detect incoming attacks
+	monitorable = true     # Can be hit by attacks
+	destroy_on_hit = false # Stay active after being hit
+	
+	if owner_type == "player":
+		hitbox_owner_layer = 2      # PlayerHurtBox layer
+		can_hit_layers = []         # Doesn't actively hit anything - just receives
+	elif owner_type == "enemy":
+		hitbox_owner_layer = 12     # EnemyHurtBox layer  
+		can_hit_layers = []         # Doesn't actively hit anything - just receives
+	elif owner_type == "plant":
+		hitbox_owner_layer = 7      # Breakables layer
+		can_hit_layers = []         # Doesn't actively hit anything - just receives
+
+func setup_as_hurtbox(owner_type: String, damage_amount: int = 5, knockback: float = 50.0):
+	"""Configure this as a HURTBOX - where the character HURTS OTHERS
+	
+	owner_type: 'player' or 'enemy'
+	damage_amount: how much damage this deals when touching others
+	knockback: how hard it pushes targets away
+	"""
+	damage = damage_amount
+	knockback_force = knockback
+	hit_type = HitType.COMBO
+	monitoring = false     # Start inactive - enable during attacks/contact
+	monitorable = false    # Others can't hit this - it hits them
+	destroy_on_hit = false # Stay active for multiple hits
+	
+	if owner_type == "player":
+		hitbox_owner_layer = 3      # PlayerAttacks layer
+		can_hit_layers = [12]       # Hit enemy hitboxes
+	elif owner_type == "enemy":
+		hitbox_owner_layer = 13     # EnemyAttacks layer
+		can_hit_layers = [2]        # Hit player hitbox
+
+func setup_as_player_hitbox():
+	"""Quick setup - Player can be hit here"""
+	setup_as_hitbox("player")
+
+func setup_as_player_hurtbox(damage_amount: int = 5):
+	"""Quick setup - Player hurts enemies here (like sword attacks)"""
+	setup_as_hurtbox("player", damage_amount)
+
+func setup_as_enemy_hitbox():
+	"""Quick setup - Enemy can be hit here"""  
+	setup_as_hitbox("enemy")
+
+func setup_as_enemy_hurtbox(damage_amount: int = 1):
+	"""Quick setup - Enemy hurts player here (like touching spikes)"""
+	setup_as_hurtbox("enemy", damage_amount)

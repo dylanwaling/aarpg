@@ -22,14 +22,14 @@ vframes = 3
 [node name="HitBox" parent="." instance=ExtResource("2_akllp")]
 position = Vector2(0, -2)
 collision_layer = 64
-collision_mask = 4
+collision_mask = 0
+script = null
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="HitBox"]
 position = Vector2(0, -5.5)
 shape = SubResource("RectangleShape2D_akllp")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
-visible = false
 position = Vector2(0, -9)
 collision_layer = 32
 collision_mask = 0
