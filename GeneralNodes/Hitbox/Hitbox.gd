@@ -222,7 +222,7 @@ func setup_player_attack(attack_damage: int = 10, knockback: float = 50.0):
 	damage = attack_damage
 	knockback_force = knockback
 	hitbox_owner_layer = 3  # PlayerAttacks layer
-	can_hit_layers = [12, 7, 6]  # Hit EnemyHurtBox + Breakables + Plants
+	can_hit_layers = [12, 7, 8]  # Hit EnemyHurtBox + Breakables + Interactables
 	hit_type = HitType.COMBO
 	
 	# Set collision layers and masks to match what we can hit
@@ -274,7 +274,7 @@ func setup_as_hitbox(owner_type: String, damage_amount: int = 0):
 		collision_layer = 1 << (hitbox_owner_layer - 1)
 		collision_mask = 0  # Enemy hitboxes don't hit anything, they receive damage
 	elif owner_type == "plant":
-		hitbox_owner_layer = 6      # Plants layer (different from general breakables)
+		hitbox_owner_layer = 7      # Breakables layer
 		can_hit_layers = []         # Doesn't actively hit anything - just receives
 		# Set collision layer for plants so player attacks can hit them
 		collision_layer = 1 << (hitbox_owner_layer - 1)
@@ -296,10 +296,10 @@ func setup_as_hurtbox(owner_type: String, damage_amount: int = 5, knockback: flo
 	
 	if owner_type == "player":
 		hitbox_owner_layer = 3      # PlayerAttacks layer
-		can_hit_layers = [12]       # Hit enemy hitboxes
+		can_hit_layers = [12]       # Hit enemy hurtboxes
 	elif owner_type == "enemy":
 		hitbox_owner_layer = 13     # EnemyAttacks layer
-		can_hit_layers = [2]        # Hit player hitbox
+		can_hit_layers = [2]        # Hit player hurtbox
 
 func setup_as_player_hitbox():
 	"""Quick setup - Player can be hit here"""

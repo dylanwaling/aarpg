@@ -234,7 +234,7 @@ height = 18.0
 
 [node name="Slime" type="CharacterBody2D"]
 collision_layer = 1024
-collision_mask = 2
+collision_mask = 32
 script = ExtResource("1_puctb")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
