@@ -51,11 +51,8 @@ func _ready():
 		hitbox.monitoring = true
 		hitbox.monitorable = true
 
-	# Add enemy to group for debugging
+	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
-	
-	# Debug collision settings
-	print("Enemy collision - Layer: ", collision_layer, " Mask: ", collision_mask)
 	
 	# Start in Idle mode
 	change_state(idle_state)
@@ -95,7 +92,6 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 		return
 		
 	health -= amount
-	print("Enemy took ", amount, " damage, health now: ", health)
 	if health <= 0:
 		die()
 	else:
@@ -110,11 +106,8 @@ func die():
 
 func _on_hitbox_area_entered(area):
 	"""Called when something enters our hitbox (like player attacks)"""
-	print("Enemy detected area entering: ", area.name, " has activate_hitbox: ", area.has_method("activate_hitbox"), " damage: ", area.get("damage"))
-	
 	# Check if it's a player attack hitbox
 	if area.has_method("activate_hitbox") and area.get("damage") != null:
-		print("Enemy taking damage from: ", area.name, " damage: ", area.damage)
 		# This is a valid attack hitbox - take damage
 		take_damage(area.damage)
 
@@ -178,7 +171,7 @@ func play_anim(state_name: String):
 		if anim.has_animation(state_name):
 			anim_name = state_name
 		else:
-			print("Animation not found: ", anim_name, " or ", state_name)
+			# Animation doesn't exist - skip silently
 			return
 
 	# Only change animation if it's different (avoids restarts)

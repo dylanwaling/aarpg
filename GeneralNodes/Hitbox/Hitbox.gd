@@ -55,9 +55,6 @@ func activate_hitbox():
 	_hit_targets.clear()  # Reset hit list for fresh activation
 	_time_left = hit_duration
 	
-	# Debug: Print collision setup
-	print("Hitbox activated - Layer: ", collision_layer, " Mask: ", collision_mask, " Can hit layers: ", can_hit_layers)
-	
 	# Auto-deactivate after duration
 	if hit_duration > 0:
 		await get_tree().create_timer(hit_duration).timeout
@@ -88,19 +85,14 @@ func _on_body_entered(body):
 
 func _on_area_entered(area):
 	"""Called when an Area2D (like another hitbox or hurtbox) enters"""
-	print("Hitbox area_entered detected: ", area.name, " active: ", _active)
-	
 	if not _active:
-		print("Hitbox not active, ignoring")
 		return
 		
 	# Don't hit the same target twice
 	if area in _hit_targets:
-		print("Area already hit, ignoring")
 		return
 		
 	# Process the hit - let the _process_hit method handle targeting
-	print("Processing hit on: ", area.name)
 	_process_hit(area)
 
 # ─────────── HIT PROCESSING ───────────
@@ -151,34 +143,24 @@ func _apply_damage(target):
 
 func _apply_interaction(target):
 	"""Trigger interactions like breaking bushes, opening chests, etc."""
-	print("Applying interaction to: ", target.name)
-	
 	# Try to find the actual entity (parent node) that should receive the interaction
 	var entity = target
 	if target.name == "HitBox" and target.get_parent():
 		entity = target.get_parent()
-		print("Found parent entity: ", entity.name)
 	
+	# Try different interaction methods in order of preference
 	if entity.has_method("interact"):
-		print("Calling interact() on: ", entity.name)
 		entity.interact()
 	elif entity.has_method("break_plant"):
-		print("Calling break_plant() on: ", entity.name)
 		entity.break_plant()
 	elif entity.has_method("break"):
-		print("Calling break() on: ", entity.name)
 		entity.break()
 	elif entity.has_method("take_damage"):
-		print("Calling take_damage() on: ", entity.name)
 		entity.take_damage(damage)
 	elif entity.has_method("activate"):
-		print("Calling activate() on: ", entity.name)
 		entity.activate()
 	elif entity.has_method("destroy"):
-		print("Calling destroy() on: ", entity.name)
 		entity.destroy()
-	else:
-		print("No interaction method found for: ", entity.name, " (type: ", entity.get_class(), ")")
 
 func _apply_knockback(target):
 	"""Push the target away from the hitbox"""
