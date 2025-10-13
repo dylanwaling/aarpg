@@ -82,12 +82,13 @@ func change_state(next):
 	current.enter(prev)
 
 # ─────────── COMBAT SYSTEM ───────────
-func take_damage(amount: int):
+func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	"""Called when player attacks hit this enemy"""
 	if is_dead:
 		return
 		
 	health -= amount
+	print("Enemy took ", amount, " damage, health now: ", health)
 	if health <= 0:
 		die()
 	else:
@@ -163,6 +164,15 @@ func play_anim(state_name: String):
 		dir_name = "down"
 
 	var anim_name := "%s_%s" % [state_name, dir_name]
+
+	# Check if animation exists before playing
+	if not anim.has_animation(anim_name):
+		# Fallback to basic animation names
+		if anim.has_animation(state_name):
+			anim_name = state_name
+		else:
+			print("Animation not found: ", anim_name, " or ", state_name)
+			return
 
 	# Only change animation if it's different (avoids restarts)
 	if !anim.is_playing() or anim.current_animation != anim_name:
