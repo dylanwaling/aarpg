@@ -13,6 +13,11 @@ extends CharacterBody2D
 
 # ─────────── GAME SETTINGS YOU CAN ADJUST ───────────
 @export var move_speed: float = 100.0  # How many pixels per second the player moves
+
+# ── PLAYER STATS (EASY TO ADJUST) ──
+@export var max_health: int = 100      # Maximum health points
+@export var current_health: int = 100  # Current health (will be damaged by enemies)
+
 const SPRITE_FLIP_OFFSET: int = -1     # Visual centering offset when sprite is flipped left
 
 # ─────────── LIVE INFORMATION THAT CHANGES DURING PLAY ───────────
@@ -125,6 +130,33 @@ func play_anim(state_name: String):
 
 	var anim_name := "%s_%s" % [state_name, dir_name]
 
-	# Only change animation if it’s different (avoids restarts)
+	# Only change animation if it's different (avoids restarts)
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
+
+# ─────────── HEALTH SYSTEM ───────────
+func take_damage(amount: int):
+	"""Called when enemies or hazards damage the player"""
+	current_health -= amount
+	current_health = max(0, current_health)  # Don't go below 0
+	
+	print("Player took ", amount, " damage! Health: ", current_health, "/", max_health)
+	
+	if current_health <= 0:
+		die()
+
+func heal(amount: int):
+	"""Restore player health (for potions, etc.)"""
+	current_health += amount
+	current_health = min(max_health, current_health)  # Don't exceed max
+	print("Player healed ", amount, " health! Health: ", current_health, "/", max_health)
+
+func die():
+	"""Handle player death"""
+	print("Player died!")
+	# You can add death logic here:
+	# - Restart level
+	# - Show game over screen
+	# - Respawn at checkpoint
+	# For now, just reset health
+	current_health = max_health

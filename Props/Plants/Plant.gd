@@ -5,8 +5,8 @@
 
 extends Node
 
-# Simple settings for testing
-@export var health: int = 1
+# ── PLANT STATS (EASY TO ADJUST) ──
+@export var health: int = 1                    # How many hits needed to break the plant
 var is_broken: bool = false
 
 # Node references  

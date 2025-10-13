@@ -21,6 +21,7 @@ extends "res://Player/Scripts/PlayerState.gd"
 @export var lock_facing: bool = true                # If true, player can't turn around mid-attack
 
 # ─────────── DAMAGE AND HITBOX SETTINGS ───────────
+# ── COMBAT STATS (EASY TO ADJUST) ──
 @export var attack_damage: int = 15                 # How much damage each attack deals
 @export var knockback_strength: float = 100.0       # How hard enemies get knocked back
 @export var hitbox_delay: float = 0.1               # Delay before hitbox becomes active (wind-up time)

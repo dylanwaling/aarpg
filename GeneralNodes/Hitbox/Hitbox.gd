@@ -120,26 +120,22 @@ func _process_hit(target):
 
 func _apply_damage(target):
 	"""Deal damage to the target if it can take damage"""
-	print("Applying damage to: ", target.name)
-	
-	# Try to find the actual entity (parent node) that should receive damage
+	# Find the actual entity (parent node) that should receive damage
+	# This handles cases where we hit a HitBox but need to damage the parent Enemy/Plant
 	var entity = target
 	if target.name == "HitBox" and target.get_parent():
 		entity = target.get_parent()
-		print("Found parent entity for damage: ", entity.name)
 	
-	# Look for common health/damage methods
+	# Try common damage method names in order of preference
 	if entity.has_method("take_damage"):
-		print("Calling take_damage() on: ", entity.name)
+		# Standard damage method - passes damage amount and hit position
 		entity.take_damage(damage, global_position)
 	elif entity.has_method("damage"):
-		print("Calling damage() on: ", entity.name)
+		# Alternative damage method name
 		entity.damage(damage)
 	elif entity.has_method("hurt"):
-		print("Calling hurt() on: ", entity.name)
+		# Another alternative damage method name
 		entity.hurt(damage)
-	else:
-		print("No damage method found for: ", entity.name)
 
 func _apply_interaction(target):
 	"""Trigger interactions like breaking bushes, opening chests, etc."""
@@ -155,8 +151,6 @@ func _apply_interaction(target):
 		entity.break_plant()
 	elif entity.has_method("break"):
 		entity.break()
-	elif entity.has_method("take_damage"):
-		entity.take_damage(damage)
 	elif entity.has_method("activate"):
 		entity.activate()
 	elif entity.has_method("destroy"):

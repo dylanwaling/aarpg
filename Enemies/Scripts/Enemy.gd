@@ -13,8 +13,12 @@ extends CharacterBody2D
 
 # ─────────── GAME SETTINGS YOU CAN ADJUST ───────────
 @export var move_speed: float = 60.0           # How many pixels per second the enemy moves (slower than player)
-@export var health: int = 3                    # How many hits the enemy can take before dying
+
+# ── COMBAT STATS (EASY TO ADJUST) ──
+@export var health: int = 50                    # How many hits the enemy can take before dying
 @export var damage: int = 1                    # How much damage this enemy deals to the player
+
+# ── AI BEHAVIOR SETTINGS ──
 @export var detection_range: float = 100.0     # How close the player needs to be for enemy to notice
 @export var attack_range: float = 32.0         # How close the player needs to be for enemy to attack
 const SPRITE_FLIP_OFFSET: int = -1             # Visual centering offset when sprite is flipped left
@@ -92,11 +96,18 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	if is_dead:
 		return
 		
+	# Subtract damage from health
 	health -= amount
+	
+	# Check if enemy should die
 	if health <= 0:
 		die()
 	else:
-		# Could add hurt animation or knockback here later
+		# Enemy survived - you can add hurt effects here:
+		# - Play hurt animation
+		# - Flash red color
+		# - Play hurt sound
+		# - Apply knockback
 		pass
 
 func die():
@@ -105,12 +116,15 @@ func die():
 	# For now, just remove the enemy
 	queue_free()
 
-func _on_hitbox_area_entered(area):
+func _on_hitbox_area_entered(_area):
 	"""Called when something enters our hitbox (like player attacks)"""
-	# Check if it's a player attack hitbox
-	if area.has_method("activate_hitbox") and area.get("damage") != null:
-		# This is a valid attack hitbox - take damage
-		take_damage(area.damage)
+	# NOTE: Damage is automatically handled by the Hitbox system
+	# This function is available for additional effects like:
+	# - Playing hurt sounds
+	# - Screen shake
+	# - Particle effects
+	# - UI damage numbers
+	pass
 
 # ─────────── AI HELPER FUNCTIONS ───────────
 func distance_to_player() -> float:
