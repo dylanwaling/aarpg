@@ -13,8 +13,8 @@ class_name EnemyAttackState
 extends "res://Enemies/Scripts/EnemyState.gd"
 
 # ─────────── ATTACK SETTINGS YOU CAN TWEAK ───────────
-@export var attack_duration: float = 0.5             # How long the attack lasts in seconds
-@export var attack_cooldown: float = 1.0             # How long to wait before attacking again
+@export var attack_duration: float = 1.5             # How long the attack lasts in seconds
+@export var attack_cooldown: float = 2.0             # How long to wait before attacking again
 @export var stop_movement: bool = true               # If true, enemy can't move during attacks
 @export var lock_facing: bool = true                 # If true, enemy can't turn around mid-attack
 
@@ -35,8 +35,8 @@ func enter(_from):
 	# Start the enemy's attack animation (attack_up, attack_down, or attack_side)
 	enemy.play_anim("attack")
 	
-	# Activate the damage hitbox if enemy has one
-	_activate_attack_hitbox()
+	# Don't activate hitbox immediately - wait for wind-up
+	# _activate_attack_hitbox() will be called later in update()
 
 	# Start counting down the attack timer
 	_time_left = attack_duration
@@ -45,6 +45,12 @@ func enter(_from):
 func update(dt):
 	# Count down the attack timer
 	_time_left -= dt
+	
+	# Activate hitbox partway through the attack (after wind-up)
+	var wind_up_time = attack_duration * 0.4  # 40% of attack is wind-up
+	if not _attack_activated and _time_left <= (attack_duration - wind_up_time):
+		_activate_attack_hitbox()
+		_attack_activated = true
 	
 	# When attack is finished, decide what to do next
 	if _time_left <= 0.0:

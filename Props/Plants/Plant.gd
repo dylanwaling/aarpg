@@ -21,9 +21,8 @@ func _ready():
 	
 	# Set up health component for plants
 	if health_component:
-		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
 		health_component.setup_plant_health(1, false)  # 1 HP, no display
-		health_component.died.connect(_on_health_died)
+		# Health component auto-connects to our methods
 
 func _on_hitbox_area_entered(area):
 	"""Called when player attack hitbox enters our detection area"""

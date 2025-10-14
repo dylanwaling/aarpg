@@ -49,11 +49,8 @@ func _ready():
 		player_hurtbox.setup_player_hurtbox()  # Player receives damage from enemies
 	
 	if health_component and health_component.has_method("setup_player_health"):
-		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
 		health_component.setup_player_health(100, true)  # 100 HP, show display
-		# Connect manually to prevent duplicates
-		health_component.died.connect(_on_health_died)
-		health_component.health_changed.connect(_on_health_changed)
+		# Health component auto-connects to our methods
 
 	# Start in Idle mode
 	change_state(idle_state)

@@ -67,10 +67,7 @@ func _ready():
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
 	
-	# Connect to health events manually
-	if health_component:
-		health_component.died.connect(_on_health_died)
-		health_component.health_changed.connect(_on_health_changed)
+	# Health component auto-connects to our methods, no manual connection needed
 	
 	# Start in Idle mode
 	change_state(idle_state)

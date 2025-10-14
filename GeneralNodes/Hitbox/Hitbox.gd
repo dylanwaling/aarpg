@@ -196,7 +196,11 @@ func _debug_nearby_objects():
 	print("Objects at hitbox position: ", results.size())
 	for result in results:
 		var obj = result.collider
-		print("  Found: ", obj.name, " layer: ", obj.collision_layer)
+		# Only access collision_layer if the object has it
+		var layer_info = ""
+		if "collision_layer" in obj:
+			layer_info = " layer: " + str(obj.collision_layer)
+		print("  Found: ", obj.name, layer_info)
 
 # ─────────── LEGACY COMPATIBILITY METHODS ───────────
 func setup_player_attack_hitbox(attack_damage: int = 10, knockback: float = 50.0):
