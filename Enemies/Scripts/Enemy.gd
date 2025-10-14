@@ -65,7 +65,7 @@ func _ready():
 	
 	if health_component and health_component.has_method("setup_enemy_health"):
 		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
-		health_component.setup_enemy_health(30, false)  # 30 HP, no display
+		health_component.setup_enemy_health(60, false)  # 60 HP, requires 4 hits (15 damage × 4 = 60)
 
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")

@@ -39,6 +39,10 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 	# Apply damage
 	_health_component.take_damage(damage_amount)
 	
+	# Debug: Show current health after damage
+	if _health_component.has_method("get_health"):
+		print("Enemy health after damage: ", _health_component.get_health(), "/", _health_component.max_health)
+	
 	# Apply knockback to parent
 	var parent = get_parent()
 	if parent and parent.has_method("apply_knockback") and knockback_force > 0:

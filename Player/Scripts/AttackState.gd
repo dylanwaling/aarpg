@@ -277,11 +277,21 @@ func _create_damage_hitbox():
 	_current_hitbox.collision_layer = 4  # Layer 3 
 	_current_hitbox.collision_mask = 2048  # Detects Layer 12
 	
+	print("Player hitbox created - Layer: ", _current_hitbox.collision_layer, " Mask: ", _current_hitbox.collision_mask)
+	
 	# Set up damage values using new professional system
 	_current_hitbox.damage = attack_damage
 	_current_hitbox.knockback_force = knockback_strength
 	
-	# Activate the hitbox to start damage detection
+	# Debug: Check hitbox setup
+	print("Hitbox position: ", _current_hitbox.global_position)
+	print("Hitbox has CollisionShape2D: ", _current_hitbox.get_node_or_null("CollisionShape2D") != null)
+	if _current_hitbox.get_node_or_null("CollisionShape2D"):
+		var collision_shape = _current_hitbox.get_node("CollisionShape2D")
+		print("CollisionShape2D disabled: ", collision_shape.disabled)
+	
+	# Wait one frame for collision system to register, then activate
+	await get_tree().process_frame
 	_current_hitbox.activate()
 
 func _position_hitbox_for_direction():

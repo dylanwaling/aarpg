@@ -26,7 +26,11 @@ func activate():
 	_is_active = true
 	_targets_hit.clear()
 	monitoring = true
-	print("Hitbox activated: damage=", damage)
+	print("Hitbox activated: damage=", damage, " Layer=", collision_layer, " Mask=", collision_mask)
+	
+	# Debug: Check what areas are currently overlapping
+	var overlapping = get_overlapping_areas()
+	print("Currently overlapping with ", overlapping.size(), " areas: ", overlapping)
 
 func deactivate():
 	"""Deactivate hitbox"""
@@ -36,16 +40,21 @@ func deactivate():
 
 func _on_area_entered(area: Area2D):
 	"""When we hit a hurtbox"""
+	print("Hitbox detected collision with: ", area.name, " - Active: ", _is_active)
+	
 	if not _is_active:
+		print("Hitbox not active, ignoring collision")
 		return
 		
 	# Only hit hurtboxes
 	if not area.has_method("take_hit"):
+		print("Area ", area.name, " doesn't have take_hit method")
 		return
 		
 	# Don't hit the same target twice
 	var target_owner = area.get_parent()
 	if target_owner in _targets_hit:
+		print("Already hit target: ", target_owner.name)
 		return
 		
 	print("Hitbox hitting: ", area.name)
