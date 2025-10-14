@@ -163,7 +163,7 @@ func _update_health_display():
 			health_label.add_theme_color_override("font_color", Color.RED)
 
 # ─────────── MODULAR SETUP METHODS ───────────
-func setup_player_health(max_hp: int = 100, show_display: bool = true):
+func setup_player_health(max_hp: int = 40, show_display: bool = true):
 	"""Quick setup for player health"""
 	max_health = max_hp
 	current_health = max_hp

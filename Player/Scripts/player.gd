@@ -170,3 +170,20 @@ func _on_health_changed(_new_health: int, _max_health: int):
 	# - Update UI health bar
 	# - Play hurt sounds
 	pass
+
+func apply_knockback(knockback_force: Vector2):
+	"""Apply knockback to the player with proper decay"""
+	print("Player receiving knockback: ", knockback_force)
+	
+	# Set the knockback velocity
+	velocity = knockback_force
+	
+	# Create a timer to gradually reduce the knockback
+	var tween = create_tween()
+	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.3)
+
+func _apply_knockback_decay(current_knockback: Vector2):
+	"""Gradually reduce knockback velocity"""
+	# Only apply if we're not already moving (don't interfere with player movement)
+	if direction == Vector2.ZERO:
+		velocity = current_knockback

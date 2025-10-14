@@ -76,11 +76,19 @@ func _on_area_entered(area):
 	if not _active:
 		return
 	
+	# Check if we already hit this area or its parent
 	if area in _hit_targets:
+		return
+	var parent = area.get_parent()
+	if parent and parent in _hit_targets:
 		return
 		
 	print("Hitbox hit area: ", area.name, " on node: ", area.get_parent().name if area.get_parent() else "no parent")
 	_process_hit(area)
+	
+	# Also track the parent to prevent multiple hits
+	if parent:
+		_hit_targets.append(parent)
 
 func _on_body_entered(body):
 	"""Hit a CharacterBody2D directly"""  
@@ -141,18 +149,31 @@ func _apply_knockback(target, health_component):
 	# Try to apply knockback to the entity that owns the health component
 	var entity = health_component.get_parent()
 	if entity and entity.has_method("apply_knockback"):
+		print("Applying knockback via method: ", knockback_vector)
 		entity.apply_knockback(knockback_vector)
 	elif entity and entity is CharacterBody2D:
-		entity.velocity += knockback_vector
+		print("Applying direct knockback to CharacterBody2D: ", knockback_vector)
+		# Set velocity directly instead of adding to prevent infinite sliding
+		entity.velocity = knockback_vector
+		# Add a timer to stop the knockback
+		_stop_knockback_after_delay(entity, 0.2)
+
+func _stop_knockback_after_delay(entity: CharacterBody2D, delay: float):
+	"""Stop knockback velocity after a delay"""
+	await get_tree().create_timer(delay).timeout
+	if is_instance_valid(entity):
+		print("Stopping knockback for: ", entity.name)
+		# Set velocity back to zero to stop sliding
+		entity.velocity = Vector2.ZERO
 
 # ─────────── SETUP METHODS ───────────
-func setup_player_attack(damage_amount: int = 10, knockback: float = 50.0):
+func setup_player_attack(damage_amount: int = 10, knockback: float = 15.0):
 	"""Setup as player attack - uses scene collision settings"""
 	damage = damage_amount
 	knockback_force = knockback
 	print("Player attack setup - damage: ", damage, " scene_layer: ", collision_layer, " scene_mask: ", collision_mask)
 
-func setup_enemy_attack(damage_amount: int = 5, knockback: float = 75.0):
+func setup_enemy_attack(damage_amount: int = 5, knockback: float = 25.0):
 	"""Setup as enemy attack - uses scene collision settings"""
 	damage = damage_amount
 	knockback_force = knockback

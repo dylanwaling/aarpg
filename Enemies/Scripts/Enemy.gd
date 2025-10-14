@@ -51,14 +51,14 @@ func _ready():
 	target_player = get_tree().get_first_node_in_group("player")
 
 	# Configure using modular system
-	if hitbox and hitbox.has_method("setup_enemy_hurtbox"):
+	if hurtbox and hurtbox.has_method("setup_enemy_hurtbox"):
 		print("Setting up enemy hurtbox for: ", name)
-		hitbox.setup_enemy_hurtbox()  # Enemy receives damage from player
+		hurtbox.setup_enemy_hurtbox()  # Enemy receives damage from player
 	else:
-		print("Enemy ", name, " hitbox doesn't have setup_enemy_hurtbox method!")
+		print("Enemy ", name, " hurtbox doesn't have setup_enemy_hurtbox method!")
 	
-	if hurtbox and hurtbox.has_method("setup_enemy_attack"):
-		hurtbox.setup_enemy_attack(damage)  # Enemy hurtbox deals damage to player
+	if hitbox and hitbox.has_method("setup_enemy_attack"):
+		hitbox.setup_enemy_attack(damage)  # Enemy hitbox deals damage to player
 	
 	if health_component and health_component.has_method("setup_enemy_health"):
 		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
@@ -200,3 +200,18 @@ func play_anim(state_name: String):
 	# Only change animation if it's different (avoids restarts)
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
+
+func apply_knockback(knockback_force: Vector2):
+	"""Apply knockback to the enemy with proper decay"""
+	print("Enemy receiving knockback: ", knockback_force)
+	
+	# Set the knockback velocity
+	velocity = knockback_force
+	
+	# Create a timer to gradually reduce the knockback
+	var tween = create_tween()
+	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.2)
+
+func _apply_knockback_decay(current_knockback: Vector2):
+	"""Gradually reduce knockback velocity"""
+	velocity = current_knockback
