@@ -124,7 +124,6 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 
 func _on_health_died():
 	"""Handle enemy death - play death animation, drop items, etc."""
-	print("Enemy ", name, " died! Removing from scene.")
 	is_dead = true
 	# For now, just remove the enemy
 	queue_free()

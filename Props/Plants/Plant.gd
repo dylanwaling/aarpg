@@ -10,46 +10,36 @@ var is_broken: bool = false
 
 # Node references  
 @onready var sprite: Sprite2D = $Sprite2D
-@onready var hitbox: Area2D = $HitBox  
+@onready var hurtbox: Area2D = $HurtBox  # Changed from hitbox to hurtbox
 @onready var static_body: StaticBody2D = $StaticBody2D
 @onready var health_component: Node2D = $Health     # The health management component
 
 func _ready():
-	# Configure using modular system
-	if hitbox and hitbox.has_method("setup_plant_hurtbox"):
-		hitbox.setup_plant_hurtbox()  # Set up collision for plant
+	# Configure using new professional system
+	if hurtbox and hurtbox.has_method("setup_environment_hurtbox"):
+		hurtbox.setup_environment_hurtbox()  # Set up collision for plant
 	
-	# Set up health component for plants
+	# Set up health component for plants - 30 HP for 2 hits (15 damage × 2 = 30)
 	if health_component:
-		health_component.setup_plant_health(1, false)  # 1 HP, no display
-		# Health component auto-connects to our methods
-
-func _on_hitbox_area_entered(area):
-	"""Called when player attack hitbox enters our detection area"""
-	# Check if the area is an attack hitbox with damage capability
-	if area.has_method("activate_hitbox") and area.get("damage") != null:
-		# This is a valid attack hitbox - break the plant
-		break_plant()
+		health_component.setup_plant_health(30, true)  # 30 HP, show display
+		# Connect to death signal (it's called 'died', not 'entity_died')
+		health_component.died.connect(_on_health_died)
 
 func break_plant():
-	"""Handle the plant breaking when hit by player attacks"""
+	"""Handle the plant breaking when health reaches 0"""
 	if is_broken:
 		return
 		
 	is_broken = true
 	
-	# Update health component (deal enough damage to kill it)
-	if health_component and health_component.is_alive():
-		health_component.take_damage(health_component.get_health())
-	
 	# Hide the plant sprite
 	if sprite:
 		sprite.visible = false
 		
-	# Disable hitbox collision detection so it can't be hit again
-	if hitbox:
-		hitbox.set_deferred("monitoring", false)
-		hitbox.set_deferred("monitorable", false)
+	# Disable hurtbox collision detection so it can't be hit again
+	if hurtbox:
+		hurtbox.set_deferred("monitoring", false)
+		hurtbox.set_deferred("monitorable", false)
 		
 	# Disable static body collision so player can walk through
 	if static_body:
@@ -77,10 +67,10 @@ func respawn_plant():
 	if sprite:
 		sprite.visible = true
 		
-	# Re-enable hitbox collision detection so it can be hit again
-	if hitbox:
-		hitbox.set_deferred("monitoring", true)
-		hitbox.set_deferred("monitorable", true)
+	# Re-enable hurtbox collision detection so it can be hit again
+	if hurtbox:
+		hurtbox.set_deferred("monitoring", true)
+		hurtbox.set_deferred("monitorable", true)
 		
 	# Re-enable static body collision so it blocks player movement
 	if static_body:
@@ -99,6 +89,5 @@ func take_damage(_amount: int, _hit_position: Vector2 = Vector2.ZERO):
 
 func _on_health_died():
 	"""Called when health component reaches 0"""
-	# Additional death effects can go here
-	# The visual hiding is already handled in break_plant()
-	pass
+	# Break the plant when health reaches 0
+	break_plant()
