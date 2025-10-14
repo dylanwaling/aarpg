@@ -271,11 +271,18 @@ func _create_damage_hitbox():
 	# Position the hitbox based on attack direction
 	_position_hitbox_for_direction()
 	
-	# Set up collision layers for player attacks using new modular system
-	_current_hitbox.setup_player_attack(attack_damage, knockback_strength)
+	# Set up collision layers for player attacks
+	# Layer 3 = Player Attacks: 2^(3-1) = 2^2 = 4
+	# Mask 12 = Enemy Hurtboxes: 2^(12-1) = 2^11 = 2048
+	_current_hitbox.collision_layer = 4  # Layer 3 
+	_current_hitbox.collision_mask = 2048  # Detects Layer 12
+	
+	# Set up damage values using new professional system
+	_current_hitbox.damage = attack_damage
+	_current_hitbox.knockback_force = knockback_strength
 	
 	# Activate the hitbox to start damage detection
-	_current_hitbox.activate_hitbox()
+	_current_hitbox.activate()
 
 func _position_hitbox_for_direction():
 	"""Position the hitbox in front of the player based on attack direction"""
@@ -304,7 +311,7 @@ func _position_hitbox_for_direction():
 func _cleanup_hitbox():
 	"""Remove the active hitbox when attack ends"""
 	if _current_hitbox and is_instance_valid(_current_hitbox):
-		_current_hitbox.deactivate_hitbox()
+		_current_hitbox.deactivate()
 		_current_hitbox.queue_free()
 		_current_hitbox = null
 

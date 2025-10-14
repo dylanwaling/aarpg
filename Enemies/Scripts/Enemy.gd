@@ -28,6 +28,8 @@ var facing: Vector2   = Vector2.DOWN           # Which direction the enemy sprit
 var current           = null                   # Which state is currently controlling the enemy
 var target_player: Player = null               # Reference to the player character to chase/attack
 var is_dead: bool = false                      # Whether this enemy has been defeated
+var post_attack_recovery: bool = false         # True when enemy should ignore player after attacking
+var attack_cooldown_timer: float = 0.0         # Prevents rapid attacks
 
 # ─────────── CONNECTIONS TO CHILD NODES IN THE SCENE ───────────
 @onready var sprite: Sprite2D        = $Sprite2D          # The visual enemy sprite (gets flipped left/right)
@@ -57,8 +59,9 @@ func _ready():
 	else:
 		print("Enemy ", name, " hurtbox doesn't have setup_enemy_hurtbox method!")
 	
-	if hitbox and hitbox.has_method("setup_enemy_attack"):
-		hitbox.setup_enemy_attack(damage)  # Enemy hitbox deals damage to player
+	if hitbox:
+		hitbox.damage = damage  # Set enemy damage using new professional system
+		hitbox.knockback_force = 80.0  # Default enemy knockback
 	
 	if health_component and health_component.has_method("setup_enemy_health"):
 		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
@@ -74,6 +77,10 @@ func _ready():
 
 # ─────────── THINGS THAT HAPPEN EVERY FRAME ───────────
 func _process(dt):
+	# Count down attack cooldown timer
+	if attack_cooldown_timer > 0.0:
+		attack_cooldown_timer -= dt
+	
 	# Every frame: update which way the enemy sprite should face
 	update_facing()
 	# Let the current state (idle, chase, attack, etc.) do its thing
@@ -149,8 +156,9 @@ func can_see_player() -> bool:
 	return distance_to_player() <= detection_range
 
 func can_attack_player() -> bool:
-	"""Is the player close enough to attack?"""
-	return distance_to_player() <= attack_range
+	"""Is the player close enough to attack and not in cooldown?"""
+	# Check both distance and attack cooldown
+	return distance_to_player() <= attack_range and attack_cooldown_timer <= 0.0
 
 # ─────────── MOVEMENT & FACING HELPERS ───────────
 func update_facing():
@@ -212,3 +220,12 @@ func apply_knockback(knockback_force: Vector2):
 func _apply_knockback_decay(current_knockback: Vector2):
 	"""Gradually reduce knockback velocity"""
 	velocity = current_knockback
+
+func can_attack() -> bool:
+	"""Check if enemy is allowed to attack (not in cooldown)"""
+	return attack_cooldown_timer <= 0.0
+
+func start_attack_cooldown(duration: float = 2.0):
+	"""Set attack cooldown to prevent rapid attacks"""
+	attack_cooldown_timer = duration
+	print("Enemy attack cooldown started: ", duration, " seconds")

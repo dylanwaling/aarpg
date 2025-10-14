@@ -22,8 +22,20 @@ extends "res://Enemies/Scripts/EnemyState.gd"
 var _time_left: float = 0.0                # Counts down from attack_duration to 0
 var _locked_facing: Vector2 = Vector2.DOWN  # Remembers which way enemy was facing when attack started
 var _attack_activated: bool = false         # Tracks if we've activated the damage hitbox
+var _can_attack_again: bool = true          # Cooldown flag to prevent rapid attacks
 
 func enter(_from):
+	# Check if we're still in cooldown from previous attack
+	if not _can_attack_again:
+		# Still in cooldown, can't attack yet
+		enemy.change_state(enemy.idle_state)
+		return
+	
+	# Set cooldown flag and start attack
+	_can_attack_again = false
+	# Set the main attack cooldown timer to prevent immediate re-attacking
+	enemy.attack_cooldown_timer = attack_cooldown
+	
 	# Remember which direction the enemy was facing when the attack started
 	if lock_facing:
 		_locked_facing = enemy.facing
@@ -46,17 +58,35 @@ func update(dt):
 	# Count down the attack timer
 	_time_left -= dt
 	
-	# Activate hitbox partway through the attack (after wind-up)
+	# Activate hitbox partway through the attack (after wind-up) - only once per attack
 	var wind_up_time = attack_duration * 0.4  # 40% of attack is wind-up
 	if not _attack_activated and _time_left <= (attack_duration - wind_up_time):
 		_activate_attack_hitbox()
 		_attack_activated = true
+		print("Enemy attack hitbox activated once for this attack cycle")
 	
 	# When attack is finished, decide what to do next
 	if _time_left <= 0.0:
-		# Always go to idle after attack to prevent immediate re-attacking
+		# Enter special post-attack idle that ignores player for 2 seconds
 		enemy.change_state(enemy.idle_state)
+		# Set a flag to make idle ignore player detection
+		enemy.post_attack_recovery = true
+		# Clear the flag after attack_cooldown seconds
+		get_tree().create_timer(attack_cooldown).timeout.connect(_enable_next_attack)
 		return
+
+func _enable_next_attack():
+	"""Called after cooldown timer expires to allow attacking again"""
+	_can_attack_again = true
+	enemy.post_attack_recovery = false
+	print("Attack cooldown finished - can attack again")
+	
+	# If player is still in range, go back to chase
+	if enemy.can_see_player():
+		enemy.change_state(enemy.chase_state)
+	else:
+		# Player left, go to wander
+		enemy.change_state(enemy.wander_state)
 
 func physics_update(_dt):
 	# Stay still during attack (if stop_movement is true)
@@ -65,27 +95,24 @@ func physics_update(_dt):
 
 func _activate_attack_hitbox():
 	"""Activate the enemy's damage hitbox to hurt the player"""
-	# Use the hitbox's built-in activation system
-	if enemy.hitbox and enemy.hitbox.has_method("activate_hitbox"):
-		enemy.hitbox.activate_hitbox()
+	# Use the new professional hitbox system
+	if enemy.hitbox:
+		# Set damage values if not already set
+		if enemy.hitbox.damage <= 0:
+			enemy.hitbox.damage = 15  # Default enemy damage
+			enemy.hitbox.knockback_force = 80.0  # Default enemy knockback
+		enemy.hitbox.activate()
 
 func _deactivate_attack_hitbox():
 	"""Disable the enemy's damage hitbox"""
-	# Use the hitbox's built-in deactivation system
-	if enemy.hitbox and enemy.hitbox.has_method("deactivate_hitbox"):
-		enemy.hitbox.deactivate_hitbox()
+	# Use the new professional hitbox system
+	if enemy.hitbox:
+		enemy.hitbox.deactivate()
 
 func exit(_to):
 	# Make sure hitbox is disabled when leaving attack state
 	_deactivate_attack_hitbox()
 	
-	# Add a brief cooldown before the enemy can attack again
-	# This prevents the attack-chase-attack loop
-	if _to == enemy.chase_state:
-		# Go to idle briefly instead of immediately chasing again
+	# Always go to idle after attack to add natural spacing
+	if _to != enemy.idle_state:
 		enemy.change_state(enemy.idle_state)
-		# Set a timer to resume chasing after cooldown
-		get_tree().create_timer(attack_cooldown).timeout.connect(func(): 
-			if enemy.can_see_player():
-				enemy.change_state(enemy.chase_state)
-		)

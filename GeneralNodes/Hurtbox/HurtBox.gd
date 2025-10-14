@@ -1,44 +1,50 @@
-## MODULAR HURTBOX SYSTEM - Receives Damage and Forwards to Health Component
+## HURTBOX - Receives Damage and Forwards to Health
 ##
-## This is a simple collision detector that finds incoming damage and forwards it
-## to a Health component. It does NOT manage health itself - that's the Health component's job.
-##
-## How it works:
-## 1. Detects collisions from enemy attacks/hazards (based on scene collision settings)
-## 2. Finds the Health component (on self or parent)
-## 3. Tells the Health component to take damage
-## 4. Applies knockback to the parent entity
-##
-## Scene Configuration:
-## Set collision_layer and collision_mask in the editor - this script reads those values
+## Simple interface: take_hit() method that finds health component and applies damage.
+## No complex collision logic - just clean damage forwarding.
 
 extends Area2D
-class_name ModularHurtBox
-
-# ─────────── CONFIGURATION ───────────
-@export var knockback_strength: float = 100.0
+class_name HurtBox
 
 # ─────────── INTERNAL REFERENCES ───────────
-var _owner_body: Node = null                   # The CharacterBody2D or other node that owns this hurtbox
-var _health_component: Node = null             # Reference to the Health component
-
-# ─────────── SIGNALS FOR COMMUNICATION ───────────
-signal damage_received(damage_amount: int, source_position: Vector2)  # When this hurtbox gets hit
-signal knockback_applied(knockback_force: Vector2)                    # When pushed around
+var _health_component: Node = null
+var _damage_immunity_timer: float = 0.0
+var _damage_immunity_duration: float = 0.5  # Half second of immunity after taking damage
 
 func _ready():
-	# Connect collision detection
-	area_entered.connect(_on_area_entered)
-	body_entered.connect(_on_body_entered)
-	
-	# Find the owner (parent entity)
-	_owner_body = get_parent()
-	
 	# Find the Health component
 	_find_health_component()
+
+func _process(delta):
+	# Count down immunity timer
+	if _damage_immunity_timer > 0.0:
+		_damage_immunity_timer -= delta
+
+func take_hit(damage_amount: int, knockback_force: float, source_position: Vector2):
+	"""Main interface - called by hitboxes to deal damage"""
+	if not _health_component:
+		print("HurtBox: No health component found!")
+		return
+		
+	# Check damage immunity
+	if _damage_immunity_timer > 0.0:
+		print("HurtBox: Still immune to damage (" + str(_damage_immunity_timer) + "s left)")
+		return
+		
+	print("HurtBox taking ", damage_amount, " damage")
 	
-	# Debug current scene settings
-	print("HurtBox initialized - Layer: ", collision_layer, " Mask: ", collision_mask)
+	# Start immunity period
+	_damage_immunity_timer = _damage_immunity_duration
+	
+	# Apply damage
+	_health_component.take_damage(damage_amount)
+	
+	# Apply knockback to parent
+	var parent = get_parent()
+	if parent and parent.has_method("apply_knockback") and knockback_force > 0:
+		var direction = (global_position - source_position).normalized()
+		var knockback_vector = direction * knockback_force
+		parent.apply_knockback(knockback_vector)
 
 func _find_health_component():
 	"""Find the Health component on this node or parent"""
@@ -49,95 +55,31 @@ func _find_health_component():
 			return
 	
 	# Check siblings (other children of parent)
-	if _owner_body:
-		for child in _owner_body.get_children():
+	var parent = get_parent()
+	if parent:
+		for child in parent.get_children():
 			if child.has_method("take_damage") and child.has_method("get_health"):
 				_health_component = child
 				return
 
 
 
-# ─────────── COLLISION DETECTION ───────────
-func _on_area_entered(area):
-	"""Called when a Hitbox touches this HurtBox"""
-	print("HurtBox hit by: ", area.name, " from: ", area.get_parent().name if area.get_parent() else "no parent")
-	_process_incoming_hit(area)
+# ─────────── UTILITY METHODS ───────────
+func get_health_component() -> Node:
+	"""Get reference to the health component"""
+	return _health_component
 
-func _on_body_entered(body):
-	"""Called when a CharacterBody2D touches this HurtBox"""
-	print("HurtBox hit by body: ", body.name)
-	_process_incoming_hit(body)
+func is_alive() -> bool:
+	"""Check if the entity is still alive"""
+	if _health_component and _health_component.has_method("is_alive"):
+		return _health_component.is_alive()
+	return true
 
-# ─────────── DAMAGE PROCESSING ───────────
-func _process_incoming_hit(attacker):
-	"""Handle what happens when something tries to hurt us"""
-	# Get damage from attacker
-	var damage_amount = _extract_damage_from_attacker(attacker)
-	if damage_amount <= 0:
-		print("No damage from attacker: ", attacker.name)
-		return
-	
-	print("Taking ", damage_amount, " damage")
-	
-	# Forward damage to Health component
-	if _health_component:
-		_health_component.take_damage(damage_amount)
-	else:
-		print("No health component found!")
-	
-	# Emit signal for other systems
-	damage_received.emit(damage_amount, attacker.global_position)
-	
-	# Apply knockback
-	var knockback_force = _extract_knockback_from_attacker(attacker)
-	if knockback_force > 0:
-		apply_knockback_from_position(attacker.global_position, knockback_force)
-
-func _extract_damage_from_attacker(attacker) -> int:
-	"""Get damage amount from the attacking object"""
-	if "damage" in attacker:
-		return attacker.damage
-	elif attacker.has_method("get_damage"):
-		return attacker.get_damage()
-	else:
-		return 0
-
-func _extract_knockback_from_attacker(attacker) -> float:
-	"""Get knockback force from the attacking object"""
-	if "knockback_force" in attacker:
-		return attacker.knockback_force
-	elif attacker.has_method("get_knockback"):
-		return attacker.get_knockback()
-	else:
-		return 0.0
-
-# ─────────── KNOCKBACK SYSTEM ───────────
-func apply_knockback_from_position(attacker_position: Vector2, force: float):
-	"""Push the owner away from an attacker's position"""
-	# Calculate direction from attacker to us
-	var knockback_direction = (global_position - attacker_position).normalized()
-	var knockback_vector = knockback_direction * force
-	
-	# Apply knockback to the owner
-	apply_knockback(knockback_vector)
-
-func apply_knockback(knockback_force: Vector2):
-	"""Apply a specific knockback vector to the owner"""
-	if not _owner_body:
-		return
-	
-	# Apply knockback based on the owner's type
-	if _owner_body.has_method("apply_knockback"):
-		_owner_body.apply_knockback(knockback_force)
-	elif _owner_body is CharacterBody2D:
-		# Direct velocity modification
-		_owner_body.velocity += knockback_force
-	elif _owner_body is RigidBody2D:
-		# Physics-based push
-		_owner_body.apply_central_impulse(knockback_force)
-	
-	# Emit signal for other systems
-	knockback_applied.emit(knockback_force)
+func get_current_health() -> int:
+	"""Get current health from the health component"""
+	if _health_component and _health_component.has_method("get_health"):
+		return _health_component.get_health()
+	return 0
 
 # ─────────── MODULAR SETUP METHODS ───────────
 # Setup methods for different entity types - now just for debugging

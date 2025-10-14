@@ -30,8 +30,8 @@ func enter(_from):
 	_idle_timer = idle_duration
 
 func update(dt):
-	# Always check if the player has come within detection range
-	if enemy.can_see_player():
+	# Only check for player if not in post-attack recovery
+	if not enemy.post_attack_recovery and enemy.can_see_player():
 		# Player spotted! Switch to chase mode
 		enemy.change_state(enemy.chase_state)
 		return
