@@ -59,15 +59,15 @@ func physics_update(_dt):
 
 func _activate_attack_hitbox():
 	"""Activate the enemy's damage hitbox to hurt the player"""
-	# Use the hurtbox's built-in activation system
-	if enemy.hurtbox and enemy.hurtbox.has_method("activate_hitbox"):
-		enemy.hurtbox.activate_hitbox()
+	# Use the hitbox's built-in activation system
+	if enemy.hitbox and enemy.hitbox.has_method("activate_hitbox"):
+		enemy.hitbox.activate_hitbox()
 
 func _deactivate_attack_hitbox():
 	"""Disable the enemy's damage hitbox"""
-	# Use the hurtbox's built-in deactivation system
-	if enemy.hurtbox and enemy.hurtbox.has_method("deactivate_hitbox"):
-		enemy.hurtbox.deactivate_hitbox()
+	# Use the hitbox's built-in deactivation system
+	if enemy.hitbox and enemy.hitbox.has_method("deactivate_hitbox"):
+		enemy.hitbox.deactivate_hitbox()
 
 func exit(_to):
 	# Make sure hitbox is disabled when leaving attack state

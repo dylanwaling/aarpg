@@ -177,6 +177,7 @@ func setup_enemy_attack(damage_amount: int = 5, knockback: float = 25.0):
 	"""Setup as enemy attack - uses scene collision settings"""
 	damage = damage_amount
 	knockback_force = knockback
+	destroy_on_hit = true  # Enemy attacks should deactivate after first hit
 	print("Enemy attack setup - damage: ", damage, " scene_layer: ", collision_layer, " scene_mask: ", collision_mask)
 
 func configure_custom(_layer: int, _targets: Array, damage_amount: int = 10):
