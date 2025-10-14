@@ -65,9 +65,9 @@ func update(dt):
 		_start_pause()
 
 func physics_update(_dt):
-	# Set velocity based on wander direction and speed (preserve knockback)
+	# Preserve knockback physics - don't override velocity during knockback
 	if enemy.knockback_timer > 0.0:
-		return  # Don't override knockback during knockback period
+		return  # Allow knockback system to control velocity
 	
 	# Move in wander direction
 	var wander_velocity = _wander_direction * (enemy.move_speed * wander_speed_multiplier)

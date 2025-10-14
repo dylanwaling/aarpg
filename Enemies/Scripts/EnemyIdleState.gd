@@ -43,7 +43,7 @@ func update(dt):
 		enemy.change_state(enemy.wander_state)
 
 func physics_update(_dt):
-	# Don't override knockback during knockback period
+	# Preserve knockback physics - don't override velocity during knockback
 	if enemy.knockback_timer > 0.0:
 		return
 	

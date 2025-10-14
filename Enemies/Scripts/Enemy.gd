@@ -54,11 +54,9 @@ func _ready():
 	target_player = get_tree().get_first_node_in_group("player")
 
 	# Configure using modular system
+	# Configure enemy to receive damage from player attacks
 	if hurtbox and hurtbox.has_method("setup_enemy_hurtbox"):
-		print("Setting up enemy hurtbox for: ", name)
-		hurtbox.setup_enemy_hurtbox()  # Enemy receives damage from player
-	else:
-		print("Enemy ", name, " hurtbox doesn't have setup_enemy_hurtbox method!")
+		hurtbox.setup_enemy_hurtbox()  # Sets up collision layers for player damage
 	
 	if hitbox:
 		hitbox.damage = damage  # Set enemy damage using new professional system
@@ -89,7 +87,7 @@ func _process(dt):
 		current.update(dt)
 
 func _physics_process(dt):
-	# Count down knockback timer BEFORE states run (timing is critical!)
+	# Count down knockback protection timer BEFORE states run (prevents state interference)
 	if knockback_timer > 0.0:
 		knockback_timer -= dt
 	
@@ -225,7 +223,7 @@ func apply_knockback(knockback_force: Vector2):
 	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.3)
 
 func _apply_knockback_decay(current_knockback: Vector2):
-	"""Gradually reduce knockback velocity"""
+	"""Called by tween to smoothly reduce knockback velocity each frame"""
 	velocity = current_knockback
 
 func can_attack() -> bool:

@@ -51,10 +51,9 @@ func physics_update(_dt):
 	# Make the enemy actually move by setting their velocity
 	# walk_direction is which way to go, move_speed is how fast
 	enemy.direction = walk_direction
-	# Move toward destination at walking speed (preserve knockback)
+	# Preserve knockback physics - don't override velocity during knockback
 	if enemy.knockback_timer > 0.0:
-		print("Walk state [", enemy.name, "]: knockback active, preserving knockback")
-		return  # Don't override knockback during knockback period
+		return  # Allow knockback system to control velocity
 	
 	# Move towards target
 	enemy.velocity = walk_direction * enemy.move_speed

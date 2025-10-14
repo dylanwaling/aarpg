@@ -53,7 +53,8 @@ func _on_area_entered(area: Area2D):
 	if target_owner in _targets_hit:
 		return
 	
-	# Deal damage through the hurtbox (use parent's center position as source)
+	# Deal damage through the hurtbox system
+	# Use parent's center position (player/enemy position) for accurate knockback direction
 	var source_pos = get_parent().global_position if get_parent() else global_position
 	area.take_hit(damage, knockback_force, source_pos)
 	

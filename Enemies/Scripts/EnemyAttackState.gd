@@ -86,7 +86,7 @@ func _enable_next_attack():
 		enemy.change_state(enemy.wander_state)  # Return to wandering if player left
 
 func physics_update(_dt):
-	# Don't override knockback during knockback period
+	# Preserve knockback physics - don't override velocity during knockback
 	if enemy.knockback_timer > 0.0:
 		return
 	
