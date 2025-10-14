@@ -45,6 +45,7 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 	# Apply knockback to parent (skip for plants and environment objects)
 	var parent = get_parent()
 	if parent and parent.has_method("apply_knockback") and knockback_force > 0 and not parent.is_in_group("environment"):
+		# Direction FROM source TO target (pushes away from attacker)
 		var direction = (global_position - source_position).normalized()
 		var knockback_vector = direction * knockback_force
 		parent.apply_knockback(knockback_vector)
