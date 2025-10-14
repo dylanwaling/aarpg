@@ -1,59 +1,63 @@
-## HITBOX SYSTEM - Handles Damage and Interactions
+## UNIVERSAL HITBOX SYSTEM - Completely Modular Damage Dealer
 ##
-## This system manages all collision-based interactions in your AARPG:
-## - Player attacks hitting enemies
-## - Player interactions with breakable objects (bushes, crates, etc.)
-## - Enemy attacks hitting the player
-## - Environmental interactions
+## This hitbox DEALS damage to anything it touches that can receive damage.
+## It works the same way for player attacks, enemy attacks, environmental hazards, etc.
+## 
+## How it works:
+## 1. Configure collision layers (what this hitbox is on, what it can hit)
+## 2. Set damage amount, knockback, duration, etc.
+## 3. Activate it (starts detecting collisions)
+## 4. When it hits something, it looks for Health components and damages them
 ##
-## The system uses collision layers to determine what can hit what:
-## - Layer 1: Player
-## - Layer 9: Enemies
-## - Additional layers can be added for breakables, NPCs, etc.
+## The key: EVERYTHING uses Health components to receive damage.
+##
+## Scene Configuration:
+## Set collision_layer and collision_mask in the editor - this script reads those values
+## collision_layer = what layer this hitbox is on
+## collision_mask = what layers this hitbox can detect/damage
 
 extends Area2D
+class_name UniversalHitbox
 
-# ─────────── HITBOX CONFIGURATION ───────────
-@export var damage: int = 10                    # How much damage this hitbox deals
-@export var knockback_force: float = 100.0      # How hard targets get knocked back
-@export var hitbox_owner_layer: int = 1         # Which layer owns this hitbox (1=player, 9=enemy)
-@export var can_hit_layers: Array[int] = [9]    # Which layers this hitbox can affect
-@export var hit_duration: float = 0.1           # How long the hitbox stays active
-@export var destroy_on_hit: bool = false        # If true, hitbox disappears after first hit
+# ─────────── DAMAGE CONFIGURATION ───────────
+@export var damage: int = 10                    # How much damage this deals
+@export var knockback_force: float = 100.0      # Knockback strength
+@export var hit_duration: float = 0.1           # How long hitbox stays active
+@export var destroy_on_hit: bool = false        # Destroy after first hit
 
-# ─────────── INTERACTION TYPES ───────────
-enum HitType {
-	DAMAGE,        # Deals damage to health
-	INTERACT,      # Triggers interactions (breaking bushes, opening chests)
-	KNOCKBACK,     # Just pushes targets around
-	COMBO          # All of the above
-}
-@export var hit_type: HitType = HitType.DAMAGE
+# ─────────── COLLISION CONFIGURATION ───────────  
+# Note: collision_layer and collision_mask are set in the scene editor
 
-# ─────────── INTERNAL TRACKING ───────────
-var _active: bool = false                       # Whether the hitbox is currently checking for hits
-var _hit_targets: Array = []                   # Prevents hitting the same target multiple times
-var _time_left: float = 0.0                   # Countdown timer for hitbox duration
+# ─────────── INTERNAL STATE ───────────
+var _active: bool = false
+var _hit_targets: Array = []
 
-# ─────────── SETUP AND ACTIVATION ───────────
 func _ready():
-	# Connect the collision detection signal
-	body_entered.connect(_on_body_entered)
+	# Connect collision signals
 	area_entered.connect(_on_area_entered)
+	body_entered.connect(_on_body_entered)
 	
-	# Start inactive - must be manually activated
+	# Debug scene settings
+	print("Hitbox initialized - Layer: ", collision_layer, " Mask: ", collision_mask)
+	
+	# Start inactive
 	_active = false
 	monitoring = false
-	
-	# Ensure proper collision shape setup
-	# Note: Requires CollisionShape2D as first child
 
+
+
+# ─────────── ACTIVATION SYSTEM ───────────
 func activate_hitbox():
-	"""Start checking for collisions and dealing damage/interactions"""
+	"""Start dealing damage"""
 	_active = true
 	monitoring = true
-	_hit_targets.clear()  # Reset hit list for fresh activation
-	_time_left = hit_duration
+	_hit_targets.clear()
+	
+	print("Hitbox activated: damage=", damage, " scene_layer=", collision_layer, " scene_mask=", collision_mask)
+	print("Hitbox position: ", global_position)
+	
+	# Debug: Check what's nearby
+	_debug_nearby_objects()
 	
 	# Auto-deactivate after duration
 	if hit_duration > 0:
@@ -61,234 +65,131 @@ func activate_hitbox():
 		deactivate_hitbox()
 
 func deactivate_hitbox():
-	"""Stop checking for collisions"""
+	"""Stop dealing damage"""
 	_active = false
 	monitoring = false
+	print("Hitbox deactivated - hit ", _hit_targets.size(), " targets")
 
 # ─────────── COLLISION DETECTION ───────────
-func _on_body_entered(body):
-	"""Called when a CharacterBody2D enters the hitbox"""
-	if not _active:
-		return
-		
-	# Check if this body is on a layer we can hit
-	var body_layer = _get_body_collision_layer(body)
-	if not body_layer in can_hit_layers:
-		return
-		
-	# Don't hit the same target twice
-	if body in _hit_targets:
-		return
-		
-	# Process the hit
-	_process_hit(body)
-
 func _on_area_entered(area):
-	"""Called when an Area2D (like another hitbox or hurtbox) enters"""
+	"""Hit an Area2D (like a HurtBox)"""
 	if not _active:
 		return
-		
-	# Don't hit the same target twice
+	
 	if area in _hit_targets:
 		return
 		
-	# Process the hit - let the _process_hit method handle targeting
+	print("Hitbox hit area: ", area.name, " on node: ", area.get_parent().name if area.get_parent() else "no parent")
 	_process_hit(area)
 
-# ─────────── HIT PROCESSING ───────────
+func _on_body_entered(body):
+	"""Hit a CharacterBody2D directly"""  
+	if not _active:
+		return
+		
+	if body in _hit_targets:
+		return
+		
+	print("Hitbox hit body: ", body.name)
+	_process_hit(body)
+
+# ─────────── UNIVERSAL DAMAGE SYSTEM ───────────
 func _process_hit(target):
-	"""Handle what happens when we hit something"""
-	# Add to hit list to prevent double-hits
+	"""Deal damage using the universal Health system"""
 	_hit_targets.append(target)
 	
-	# Determine what kind of hit to apply
-	match hit_type:
-		HitType.DAMAGE:
-			_apply_damage(target)
-		HitType.INTERACT:
-			_apply_interaction(target)
-		HitType.KNOCKBACK:
-			_apply_knockback(target)
-		HitType.COMBO:
-			_apply_damage(target)
-			_apply_interaction(target)
-			_apply_knockback(target)
+	# Find a Health component to damage
+	var health_component = _find_health_component(target)
+	if health_component:
+		print("Dealing ", damage, " damage to health component")
+		health_component.take_damage(damage)
+		_apply_knockback(target, health_component)
+	else:
+		print("No health component found on target: ", target.name)
 	
-	# Destroy hitbox if configured to do so
 	if destroy_on_hit:
 		deactivate_hitbox()
 
-func _apply_damage(target):
-	"""Deal damage to the target if it can take damage"""
-	# Find the actual entity (parent node) that should receive damage
-	# This handles cases where we hit a HitBox but need to damage the parent Enemy/Plant
-	var entity = target
-	if target.name == "HitBox" and target.get_parent():
-		entity = target.get_parent()
+func _find_health_component(target) -> Node:
+	"""Find a Health component on the target or its parent"""
+	# Check the target itself for a Health component
+	for child in target.get_children():
+		if child.has_method("take_damage") and child.has_method("get_health"):
+			return child
 	
-	# Try common damage method names in order of preference
-	if entity.has_method("take_damage"):
-		# Standard damage method - passes damage amount and hit position
-		entity.take_damage(damage, global_position)
-	elif entity.has_method("damage"):
-		# Alternative damage method name
-		entity.damage(damage)
-	elif entity.has_method("hurt"):
-		# Another alternative damage method name
-		entity.hurt(damage)
-
-func _apply_interaction(target):
-	"""Trigger interactions like breaking bushes, opening chests, etc."""
-	# Try to find the actual entity (parent node) that should receive the interaction
-	var entity = target
-	if target.name == "HitBox" and target.get_parent():
-		entity = target.get_parent()
+	# Check the target's parent for a Health component
+	var parent = target.get_parent()
+	if parent:
+		for child in parent.get_children():
+			if child.has_method("take_damage") and child.has_method("get_health"):
+				return child
 	
-	# Try different interaction methods in order of preference
-	if entity.has_method("interact"):
-		entity.interact()
-	elif entity.has_method("break_plant"):
-		entity.break_plant()
-	elif entity.has_method("break"):
-		entity.break()
-	elif entity.has_method("activate"):
-		entity.activate()
-	elif entity.has_method("destroy"):
-		entity.destroy()
+	# Check if target itself is a health component
+	if target.has_method("take_damage") and target.has_method("get_health"):
+		return target
+		
+	return null
 
-func _apply_knockback(target):
-	"""Push the target away from the hitbox"""
+func _apply_knockback(target, health_component):
+	"""Apply knockback force"""
 	if knockback_force <= 0:
 		return
 		
-	# Calculate knockback direction (from hitbox to target)
 	var knockback_direction = (target.global_position - global_position).normalized()
+	var knockback_vector = knockback_direction * knockback_force
 	
-	# Apply knockback if target supports it
-	if target.has_method("apply_knockback"):
-		target.apply_knockback(knockback_direction * knockback_force)
-	elif target.has_method("push"):
-		target.push(knockback_direction * knockback_force)
-	elif target is CharacterBody2D:
-		# Direct velocity modification for CharacterBody2D
-		target.velocity += knockback_direction * knockback_force
+	# Try to apply knockback to the entity that owns the health component
+	var entity = health_component.get_parent()
+	if entity and entity.has_method("apply_knockback"):
+		entity.apply_knockback(knockback_vector)
+	elif entity and entity is CharacterBody2D:
+		entity.velocity += knockback_vector
 
-# ─────────── HELPER METHODS ───────────
-func _get_body_collision_layer(body) -> int:
-	"""Get which collision layer a CharacterBody2D is on"""
-	var layers = body.collision_layer
-	# Find the first set bit (layer number)
-	for i in range(32):
-		if layers & (1 << i):
-			return i + 1  # Godot layers are 1-indexed in the editor
-	return 0
-
-func _get_area_collision_layer(area) -> int:
-	"""Get which collision layer an Area2D is on"""
-	var layers = area.collision_layer
-	# Find the first set bit (layer number)
-	for i in range(32):
-		if layers & (1 << i):
-			return i + 1  # Godot layers are 1-indexed in the editor
-	return 0
-
-# ─────────── EASY SETUP METHODS ───────────
-func setup_player_attack(attack_damage: int = 10, knockback: float = 50.0):
-	"""Quick setup for player attack hitboxes"""
-	damage = attack_damage
-	knockback_force = knockback
-	hitbox_owner_layer = 3  # PlayerAttacks layer
-	can_hit_layers = [12, 7, 8]  # Hit EnemyHurtBox + Breakables + Interactables
-	hit_type = HitType.COMBO
-	
-	# Set collision layers and masks to match what we can hit
-	collision_layer = 1 << (hitbox_owner_layer - 1)  # Set our layer
-	collision_mask = 0
-	for layer in can_hit_layers:
-		collision_mask |= 1 << (layer - 1)  # Set mask for layers we can hit
-
-func setup_enemy_attack(attack_damage: int = 5, knockback: float = 75.0):
-	"""Quick setup for enemy attack hitboxes"""
-	damage = attack_damage
-	knockback_force = knockback
-	hitbox_owner_layer = 9
-	can_hit_layers = [1]  # Hit player
-	hit_type = HitType.COMBO
-
-func setup_environmental_interaction():
-	"""Quick setup for breaking bushes, opening chests, etc."""
-	damage = 0
-	knockback_force = 0
-	hitbox_owner_layer = 1
-	can_hit_layers = [10]  # You can add layer 10 for breakables
-	hit_type = HitType.INTERACT
-
-# ─────────── HITBOX & HURTBOX SETUP METHODS ───────────
-func setup_as_hitbox(owner_type: String, damage_amount: int = 0):
-	"""Configure this as a HITBOX - where the character CAN BE HIT
-	
-	owner_type: 'player' or 'enemy' or 'plant'
-	damage_amount: how much damage this deals (usually 0 for hitboxes that just receive damage)
-	"""
-	damage = damage_amount
-	knockback_force = 0
-	hit_type = HitType.INTERACT  # Use INTERACT so it calls take_damage methods
-	monitoring = true      # Can detect incoming attacks
-	monitorable = true     # Can be hit by attacks
-	destroy_on_hit = false # Stay active after being hit
-	
-	if owner_type == "player":
-		hitbox_owner_layer = 2      # PlayerHurtBox layer
-		can_hit_layers = []         # Doesn't actively hit anything - just receives
-		# Set collision layer for player so enemy attacks can hit them
-		collision_layer = 1 << (hitbox_owner_layer - 1)
-		collision_mask = 0  # Player hitboxes don't hit anything, they receive damage
-	elif owner_type == "enemy":
-		hitbox_owner_layer = 12     # EnemyHurtBox layer  
-		can_hit_layers = []         # Doesn't actively hit anything - just receives
-		# Set collision layer for enemies so player attacks can hit them
-		collision_layer = 1 << (hitbox_owner_layer - 1)
-		collision_mask = 0  # Enemy hitboxes don't hit anything, they receive damage
-	elif owner_type == "plant":
-		hitbox_owner_layer = 7      # Breakables layer
-		can_hit_layers = []         # Doesn't actively hit anything - just receives
-		# Set collision layer for plants so player attacks can hit them
-		collision_layer = 1 << (hitbox_owner_layer - 1)
-		collision_mask = 0  # Plants don't hit anything
-
-func setup_as_hurtbox(owner_type: String, damage_amount: int = 5, knockback: float = 50.0):
-	"""Configure this as a HURTBOX - where the character HURTS OTHERS
-	
-	owner_type: 'player' or 'enemy'
-	damage_amount: how much damage this deals when touching others
-	knockback: how hard it pushes targets away
-	"""
+# ─────────── SETUP METHODS ───────────
+func setup_player_attack(damage_amount: int = 10, knockback: float = 50.0):
+	"""Setup as player attack - uses scene collision settings"""
 	damage = damage_amount
 	knockback_force = knockback
-	hit_type = HitType.COMBO
-	monitoring = false     # Start inactive - enable during attacks/contact
-	monitorable = false    # Others can't hit this - it hits them
-	destroy_on_hit = false # Stay active for multiple hits
-	
-	if owner_type == "player":
-		hitbox_owner_layer = 3      # PlayerAttacks layer
-		can_hit_layers = [12]       # Hit enemy hurtboxes
-	elif owner_type == "enemy":
-		hitbox_owner_layer = 13     # EnemyAttacks layer
-		can_hit_layers = [2]        # Hit player hurtbox
+	print("Player attack setup - damage: ", damage, " scene_layer: ", collision_layer, " scene_mask: ", collision_mask)
 
-func setup_as_player_hitbox():
-	"""Quick setup - Player can be hit here"""
-	setup_as_hitbox("player")
+func setup_enemy_attack(damage_amount: int = 5, knockback: float = 75.0):
+	"""Setup as enemy attack - uses scene collision settings"""
+	damage = damage_amount
+	knockback_force = knockback
+	print("Enemy attack setup - damage: ", damage, " scene_layer: ", collision_layer, " scene_mask: ", collision_mask)
+
+func configure_custom(_layer: int, _targets: Array, damage_amount: int = 10):
+	"""Setup with custom configuration - ignores layer/targets, uses scene settings"""
+	damage = damage_amount
+	print("Custom setup - damage: ", damage, " scene_layer: ", collision_layer, " scene_mask: ", collision_mask)
+
+func _debug_nearby_objects():
+	"""Debug what objects are nearby"""
+	var space_state = get_world_2d().direct_space_state
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = global_position
+	query.collision_mask = 0xFFFFFFFF  # Check all layers
+	
+	var results = space_state.intersect_point(query, 10)
+	print("Objects at hitbox position: ", results.size())
+	for result in results:
+		var obj = result.collider
+		print("  Found: ", obj.name, " layer: ", obj.collision_layer)
+
+# ─────────── LEGACY COMPATIBILITY METHODS ───────────
+func setup_player_attack_hitbox(attack_damage: int = 10, knockback: float = 50.0):
+	"""Setup for player attack hitboxes - deals damage to enemies"""
+	setup_player_attack(attack_damage, knockback)
+
+func setup_enemy_attack_hitbox(attack_damage: int = 5, knockback: float = 75.0):
+	"""Setup for enemy attack hitboxes - deals damage to player"""
+	setup_enemy_attack(attack_damage, knockback)
 
 func setup_as_player_hurtbox(damage_amount: int = 5):
-	"""Quick setup - Player hurts enemies here (like sword attacks)"""
-	setup_as_hurtbox("player", damage_amount)
-
-func setup_as_enemy_hitbox():
-	"""Quick setup - Enemy can be hit here"""  
-	setup_as_hitbox("enemy")
+	"""Legacy: Player hurts enemies here"""
+	setup_player_attack(damage_amount)
 
 func setup_as_enemy_hurtbox(damage_amount: int = 1):
-	"""Quick setup - Enemy hurts player here (like touching spikes)"""
-	setup_as_hurtbox("enemy", damage_amount)
+	"""Legacy: Enemy hurts player here"""
+	setup_enemy_attack(damage_amount)
+# End of file

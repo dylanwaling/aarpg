@@ -8,9 +8,12 @@
 extends Node2D
 
 # ── HEALTH SETTINGS (ADJUST IN INSPECTOR) ──
-@export var max_health: int = 100          # Maximum health points
-@export var show_health_display: bool = true  # Whether to show the red health number above entity
-@export var override_editor_styling: bool = false  # If true, applies script styling instead of editor styling
+@export var max_health: int = 100                    # Maximum health points
+@export var starting_health: int = -1                # Starting health (-1 = use max_health)
+@export var show_health_display: bool = true         # Whether to show the red health number above entity
+@export var override_editor_styling: bool = false    # If true, applies script styling instead of editor styling
+@export var auto_connect_to_parent: bool = true      # Automatically connect to parent's damage methods
+@export var parent_damage_method: String = "take_damage"  # Method name to call on parent when damaged
 
 # ── HEALTH STATE ──
 var current_health: int
@@ -25,14 +28,36 @@ signal died()
 signal damage_taken(damage_amount: int)
 
 func _ready():
-	# Initialize health to maximum
-	current_health = max_health
+	# Initialize health (use starting_health if set, otherwise max_health)
+	current_health = starting_health if starting_health > 0 else max_health
 	
 	# Set up health display
 	_setup_health_display()
 	
+	# Auto-connect to parent if enabled
+	if auto_connect_to_parent:
+		_auto_connect_to_parent()
+	
 	# Update display
 	_update_health_display()
+
+func _auto_connect_to_parent():
+	"""Automatically connect health events to parent methods if they exist"""
+	var parent = get_parent()
+	if not parent:
+		return
+	
+	# Connect died signal if parent has death handling method (only if not already connected)
+	if parent.has_method("_on_health_died") and not died.is_connected(parent._on_health_died):
+		died.connect(parent._on_health_died)
+	
+	# Connect health_changed signal if parent has health change handling (only if not already connected)
+	if parent.has_method("_on_health_changed") and not health_changed.is_connected(parent._on_health_changed):
+		health_changed.connect(parent._on_health_changed)
+	
+	# Connect damage_taken signal if parent has damage handling (only if not already connected)
+	if parent.has_method("_on_damage_taken") and not damage_taken.is_connected(parent._on_damage_taken):
+		damage_taken.connect(parent._on_damage_taken)
 
 func _setup_health_display():
 	"""Configure the visual health display"""
@@ -136,3 +161,42 @@ func _update_health_display():
 			health_label.add_theme_color_override("font_color", Color.YELLOW)
 		else:
 			health_label.add_theme_color_override("font_color", Color.RED)
+
+# ─────────── MODULAR SETUP METHODS ───────────
+func setup_player_health(max_hp: int = 100, show_display: bool = true):
+	"""Quick setup for player health"""
+	max_health = max_hp
+	current_health = max_hp
+	show_health_display = show_display
+	auto_connect_to_parent = true
+	_update_health_display()
+
+func setup_enemy_health(max_hp: int = 30, show_display: bool = false):
+	"""Quick setup for enemy health"""
+	max_health = max_hp
+	current_health = max_hp
+	show_health_display = show_display
+	auto_connect_to_parent = true
+	_update_health_display()
+
+func setup_plant_health(max_hp: int = 1, show_display: bool = false):
+	"""Quick setup for breakable plant health"""
+	max_health = max_hp
+	current_health = max_hp
+	show_health_display = show_display
+	auto_connect_to_parent = true
+	_update_health_display()
+
+func configure_from_editor():
+	"""Call this to refresh settings when changed in editor"""
+	if starting_health > 0:
+		current_health = starting_health
+	else:
+		current_health = max_health
+	_update_health_display()
+
+func trigger_parent_damage_method(amount: int):
+	"""Manually call the parent's damage method if it exists"""
+	var parent = get_parent()
+	if parent and parent.has_method(parent_damage_method):
+		parent.call(parent_damage_method, amount)

@@ -271,13 +271,7 @@ func _create_damage_hitbox():
 	# Position the hitbox based on attack direction
 	_position_hitbox_for_direction()
 	
-	# Configure the hitbox damage and timing values
-	_current_hitbox.damage = attack_damage
-	_current_hitbox.knockback_force = knockback_strength
-	_current_hitbox.hit_duration = hitbox_duration
-	_current_hitbox.hit_type = _current_hitbox.HitType.COMBO
-	
-	# Set up collision layers for player attacks
+	# Set up collision layers for player attacks using new modular system
 	_current_hitbox.setup_player_attack(attack_damage, knockback_strength)
 	
 	# Activate the hitbox to start damage detection

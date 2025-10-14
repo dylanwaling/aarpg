@@ -43,12 +43,17 @@ func _ready():
 	# Add player to group so enemies can find us
 	add_to_group("player")
 
-	# Connect to health events
-	if health_component:
+	# Configure using modular system
+	var player_hurtbox = get_node_or_null("HurtBox")
+	if player_hurtbox and player_hurtbox.has_method("setup_player_hurtbox"):
+		player_hurtbox.setup_player_hurtbox()  # Player receives damage from enemies
+	
+	if health_component and health_component.has_method("setup_player_health"):
+		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
+		health_component.setup_player_health(100, true)  # 100 HP, show display
+		# Connect manually to prevent duplicates
 		health_component.died.connect(_on_health_died)
 		health_component.health_changed.connect(_on_health_changed)
-
-	# Note: HurtBox uses its own script - setup handled there
 
 	# Start in Idle mode
 	change_state(idle_state)

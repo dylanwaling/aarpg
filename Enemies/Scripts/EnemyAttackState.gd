@@ -59,20 +59,15 @@ func physics_update(_dt):
 
 func _activate_attack_hitbox():
 	"""Activate the enemy's damage hitbox to hurt the player"""
-	# Try to find a hurtbox (damage dealer) on the enemy
-	if enemy.hurtbox:
-		# Enable the hurtbox so it can detect collision with player
-		enemy.hurtbox.monitoring = true
-		enemy.hurtbox.monitorable = true
-		
-		# Set up a timer to disable it after a short time
-		get_tree().create_timer(0.2).timeout.connect(_deactivate_attack_hitbox)
+	# Use the hurtbox's built-in activation system
+	if enemy.hurtbox and enemy.hurtbox.has_method("activate_hitbox"):
+		enemy.hurtbox.activate_hitbox()
 
 func _deactivate_attack_hitbox():
 	"""Disable the enemy's damage hitbox"""
-	if enemy.hurtbox:
-		enemy.hurtbox.monitoring = false
-		enemy.hurtbox.monitorable = false
+	# Use the hurtbox's built-in deactivation system
+	if enemy.hurtbox and enemy.hurtbox.has_method("deactivate_hitbox"):
+		enemy.hurtbox.deactivate_hitbox()
 
 func exit(_to):
 	# Make sure hitbox is disabled when leaving attack state

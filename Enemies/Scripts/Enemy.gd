@@ -50,23 +50,24 @@ func _ready():
 	# Find the player in the scene so we can chase/attack them
 	target_player = get_tree().get_first_node_in_group("player")
 
-	# Set up hitbox to detect when player attacks hit us
-	if hitbox:
-		hitbox.area_entered.connect(_on_hitbox_area_entered)
-		hitbox.monitoring = true
-		hitbox.monitorable = true
-
-	# Set up hurtbox to deal damage to player when they touch us
-	if hurtbox:
-		hurtbox.body_entered.connect(_on_hurtbox_body_entered)
-		hurtbox.area_entered.connect(_on_hurtbox_area_entered)
-		hurtbox.monitoring = false  # Start disabled, enable during attacks
-		hurtbox.monitorable = true
+	# Configure using modular system
+	if hitbox and hitbox.has_method("setup_enemy_hurtbox"):
+		print("Setting up enemy hurtbox for: ", name)
+		hitbox.setup_enemy_hurtbox()  # Enemy receives damage from player
+	else:
+		print("Enemy ", name, " hitbox doesn't have setup_enemy_hurtbox method!")
+	
+	if hurtbox and hurtbox.has_method("setup_enemy_attack"):
+		hurtbox.setup_enemy_attack(damage)  # Enemy hurtbox deals damage to player
+	
+	if health_component and health_component.has_method("setup_enemy_health"):
+		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
+		health_component.setup_enemy_health(30, false)  # 30 HP, no display
 
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
 	
-	# Connect to health events
+	# Connect to health events manually
 	if health_component:
 		health_component.died.connect(_on_health_died)
 		health_component.health_changed.connect(_on_health_changed)
@@ -131,28 +132,7 @@ func _on_health_changed(_new_health: int, _max_health: int):
 	# - Damage numbers
 	pass
 
-func _on_hitbox_area_entered(_area):
-	"""Called when something enters our hitbox (like player attacks)"""
-	# NOTE: Damage is automatically handled by the Hitbox system
-	# This function is available for additional effects like:
-	# - Playing hurt sounds
-	# - Screen shake
-	# - Particle effects
-	# - UI damage numbers
-	pass
-
-func _on_hurtbox_body_entered(body):
-	"""Called when player's CharacterBody2D touches our hurtbox"""
-	if body.has_method("take_damage") and body.is_in_group("player"):
-		print("Enemy dealing ", damage, " damage to player")  # Debug line
-		body.take_damage(damage, global_position)
-
-func _on_hurtbox_area_entered(area):
-	"""Called when player's Area2D (like their hitbox) touches our hurtbox"""
-	# Try to find the player parent node
-	var player_node = area.get_parent()
-	if player_node and player_node.has_method("take_damage") and player_node.is_in_group("player"):
-		player_node.take_damage(damage, global_position)
+# Collision methods removed - now handled by Hitbox/Hurtbox scripts
 
 # ─────────── AI HELPER FUNCTIONS ───────────
 func distance_to_player() -> float:
@@ -220,5 +200,3 @@ func play_anim(state_name: String):
 	# Only change animation if it's different (avoids restarts)
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
-
-

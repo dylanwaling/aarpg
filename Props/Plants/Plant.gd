@@ -15,16 +15,14 @@ var is_broken: bool = false
 @onready var health_component: Node2D = $Health     # The health management component
 
 func _ready():
-		# Set up hitbox to detect when player attacks hit us
-	if hitbox:
-		hitbox.area_entered.connect(_on_hitbox_area_entered)
-		hitbox.monitoring = true
-		hitbox.monitorable = true
+	# Configure using modular system
+	if hitbox and hitbox.has_method("setup_plant_hurtbox"):
+		hitbox.setup_plant_hurtbox()  # Set up collision for plant
 	
-	# Connect to health events and set plant-specific health
+	# Set up health component for plants
 	if health_component:
-		health_component.max_health = 1
-		health_component.reset_health()  # This sets current_health to max_health (1)
+		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
+		health_component.setup_plant_health(1, false)  # 1 HP, no display
 		health_component.died.connect(_on_health_died)
 
 func _on_hitbox_area_entered(area):
