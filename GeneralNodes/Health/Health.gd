@@ -112,6 +112,8 @@ func die():
 	is_dead = true
 	current_health = 0
 	
+	print("Health component: Entity dying, emitting died signal")
+	
 	# Emit death signal
 	died.emit()
 	
@@ -154,8 +156,22 @@ func get_health_percentage() -> float:
 
 func _update_health_display():
 	"""Update the visual health display"""
+	print("Updating health display: ", current_health, "/", max_health, " - Show display: ", show_health_display)
+	
 	if health_label and show_health_display:
+		# Update text display
 		health_label.text = str(current_health)
+		print("Updated health label to: ", health_label.text)
+		
+		# Update health bar if it exists
+		var health_bar = get_node_or_null("HealthBar") 
+		if not health_bar:
+			health_bar = get_node_or_null("../HealthBar")  # Check parent
+		if health_bar and health_bar.has_method("set_value"):
+			var percentage = float(current_health) / float(max_health) * 100.0
+			health_bar.value = percentage
+			print("Updated health bar to: ", percentage, "%")
+		
 		# Make text more visible when health is low
 		if current_health <= max_health * 0.3:  # 30% health or less
 			health_label.add_theme_color_override("font_color", Color.YELLOW)

@@ -65,7 +65,7 @@ func _ready():
 	
 	if health_component and health_component.has_method("setup_enemy_health"):
 		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
-		health_component.setup_enemy_health(60, false)  # 60 HP, requires 4 hits (15 damage × 4 = 60)
+		health_component.setup_enemy_health(60, true)  # 60 HP, show health display
 
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")
@@ -124,6 +124,7 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 
 func _on_health_died():
 	"""Handle enemy death - play death animation, drop items, etc."""
+	print("Enemy ", name, " died! Removing from scene.")
 	is_dead = true
 	# For now, just remove the enemy
 	queue_free()
