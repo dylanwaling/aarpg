@@ -1,9 +1,14 @@
-## GENERAL HEALTH SYSTEM
+## PROFESSIONAL HEALTH SYSTEM - Universal Health Management Component
 ##
-## A reusable health component that can be added to any node (Player, Enemy, Plant, etc.)
-## Handles health tracking, damage, death, and optional visual health display.
-## Just drag this scene onto your character and adjust max_health as needed.
-## Position the HealthLabel child node in the scene editor to place the health display.
+## Core Features:
+## • Universal health management for any entity (Player, Enemy, Plant, etc.)
+## • Automatic parent method connection (connects to _on_health_died, _on_damage_taken if they exist)
+## • Visual health display with configurable styling
+## • Proper death handling with signals
+## • Setup methods for different entity types (setup_player_health, setup_enemy_health, etc.)
+##
+## Usage: Drag Health.tscn into your scene, configure max_health, call appropriate setup method.
+## Position HealthLabel child node to control where health display appears.
 
 extends Node2D
 

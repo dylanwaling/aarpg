@@ -63,7 +63,6 @@ func update(dt):
 	if not _attack_activated and _time_left <= (attack_duration - wind_up_time):
 		_activate_attack_hitbox()
 		_attack_activated = true
-		print("Enemy attack hitbox activated once for this attack cycle")
 	
 	# When attack is finished, decide what to do next
 	if _time_left <= 0.0:
@@ -79,19 +78,20 @@ func _enable_next_attack():
 	"""Called after cooldown timer expires to allow attacking again"""
 	_can_attack_again = true
 	enemy.post_attack_recovery = false
-	print("Attack cooldown finished - can attack again")
 	
-	# If player is still in range, go back to chase
+	# Resume appropriate behavior based on player proximity
 	if enemy.can_see_player():
-		enemy.change_state(enemy.chase_state)
+		enemy.change_state(enemy.chase_state)  # Continue chasing if player nearby
 	else:
-		# Player left, go to wander
-		enemy.change_state(enemy.wander_state)
+		enemy.change_state(enemy.wander_state)  # Return to wandering if player left
 
 func physics_update(_dt):
-	# Stay still during attack (if stop_movement is true)
-	if stop_movement:
-		enemy.velocity = Vector2.ZERO
+	# Don't override knockback during knockback period
+	if enemy.knockback_timer > 0.0:
+		return
+	
+	# Attack state doesn't move the enemy - they stay in place during attack
+	enemy.velocity = Vector2.ZERO
 
 func _activate_attack_hitbox():
 	"""Activate the enemy's damage hitbox to hurt the player"""

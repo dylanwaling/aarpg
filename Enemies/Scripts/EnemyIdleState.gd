@@ -43,5 +43,9 @@ func update(dt):
 		enemy.change_state(enemy.wander_state)
 
 func physics_update(_dt):
-	# Stay still during idle
+	# Don't override knockback during knockback period
+	if enemy.knockback_timer > 0.0:
+		return
+	
+	# Idle state: enemy doesn't move
 	enemy.velocity = Vector2.ZERO

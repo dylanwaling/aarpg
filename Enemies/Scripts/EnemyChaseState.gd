@@ -37,7 +37,11 @@ func update(_dt):
 func physics_update(_dt):
 	# Calculate direction to player and move toward them at full speed
 	enemy.direction = enemy.direction_to_player()
-	enemy.velocity = enemy.direction * enemy.move_speed
-
-	# Keep updating the animation to match movement direction
+	
+	# Only set velocity if no active knockback (preserve knockback physics)
+	if enemy.knockback_timer > 0:
+		return  # Don't override knockback during knockback period
+	
+	# Move towards player
+	enemy.velocity = enemy.direction * enemy.move_speed	# Keep updating the animation to match movement direction
 	enemy.play_anim("walk")

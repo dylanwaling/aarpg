@@ -10,20 +10,22 @@ var is_broken: bool = false
 
 # Node references  
 @onready var sprite: Sprite2D = $Sprite2D
-@onready var hurtbox: Area2D = $HurtBox  # Changed from hitbox to hurtbox
-@onready var static_body: StaticBody2D = $StaticBody2D
-@onready var health_component: Node2D = $Health     # The health management component
+@onready var hurtbox: Area2D = $HurtBox  # The component that receives damage
+@onready var static_body: StaticBody2D = $StaticBody2D  # The collision body
 
 func _ready():
+	# Add to environment group (prevents knockback attempts)
+	add_to_group("environment")
+	
 	# Configure using new professional system
 	if hurtbox and hurtbox.has_method("setup_environment_hurtbox"):
 		hurtbox.setup_environment_hurtbox()  # Set up collision for plant
 	
 	# Set up health component for plants - 30 HP for 2 hits (15 damage × 2 = 30)
+	var health_component = get_node("Health")
 	if health_component:
 		health_component.setup_plant_health(30, true)  # 30 HP, show display
-		# Connect to death signal (it's called 'died', not 'entity_died')
-		health_component.died.connect(_on_health_died)
+		# Health component will auto-connect to _on_health_died method
 
 func break_plant():
 	"""Handle the plant breaking when health reaches 0"""
@@ -60,6 +62,7 @@ func respawn_plant():
 	is_broken = false
 	
 	# Reset health component
+	var health_component = get_node("Health")
 	if health_component:
 		health_component.reset_health()
 	

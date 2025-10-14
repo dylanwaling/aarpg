@@ -29,6 +29,7 @@ var current           = null                   # Which state is currently contro
 var target_player: Player = null               # Reference to the player character to chase/attack
 var is_dead: bool = false                      # Whether this enemy has been defeated
 var post_attack_recovery: bool = false         # True when enemy should ignore player after attacking
+var knockback_timer: float = 0.0               # Timer for knockback duration
 var attack_cooldown_timer: float = 0.0         # Prevents rapid attacks
 
 # ─────────── CONNECTIONS TO CHILD NODES IN THE SCENE ───────────
@@ -88,6 +89,10 @@ func _process(dt):
 		current.update(dt)
 
 func _physics_process(dt):
+	# Count down knockback timer BEFORE states run (timing is critical!)
+	if knockback_timer > 0.0:
+		knockback_timer -= dt
+	
 	# Let the current state handle physics stuff (like setting velocity)
 	if current:
 		current.physics_update(dt)
@@ -207,15 +212,17 @@ func play_anim(state_name: String):
 		anim.play(anim_name)
 
 func apply_knockback(knockback_force: Vector2):
-	"""Apply knockback to the enemy with proper decay"""
-	print("Enemy receiving knockback: ", knockback_force)
-	
-	# Set the knockback velocity
+	"""Apply knockback to the enemy with proper decay (matches player implementation)"""
+
+	# Set the knockback velocity immediately
 	velocity = knockback_force
 	
-	# Create a timer to gradually reduce the knockback
+	# Set knockback timer to prevent movement override
+	knockback_timer = 0.3
+	
+	# Create a timer to gradually reduce the knockback (same as player)
 	var tween = create_tween()
-	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.2)
+	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.3)
 
 func _apply_knockback_decay(current_knockback: Vector2):
 	"""Gradually reduce knockback velocity"""

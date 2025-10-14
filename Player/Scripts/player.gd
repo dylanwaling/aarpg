@@ -169,18 +169,14 @@ func _on_health_changed(_new_health: int, _max_health: int):
 	pass
 
 func apply_knockback(knockback_force: Vector2):
-	"""Apply knockback to the player with proper decay"""
-	print("Player receiving knockback: ", knockback_force)
-	
-	# Set the knockback velocity
+	"""Apply knockback to the player with proper decay (matches enemy implementation)"""
+	# Set the knockback velocity immediately
 	velocity = knockback_force
 	
-	# Create a timer to gradually reduce the knockback
+	# Create a timer to gradually reduce the knockback (same as enemy)
 	var tween = create_tween()
 	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.3)
 
 func _apply_knockback_decay(current_knockback: Vector2):
-	"""Gradually reduce knockback velocity"""
-	# Only apply if we're not already moving (don't interfere with player movement)
-	if direction == Vector2.ZERO:
-		velocity = current_knockback
+	"""Gradually reduce knockback velocity (matches enemy implementation)"""
+	velocity = current_knockback

@@ -65,12 +65,13 @@ func update(dt):
 		_start_pause()
 
 func physics_update(_dt):
-	# Set velocity based on wander direction and speed
-	if not _is_paused and _wander_distance_left > 0.0:
-		enemy.velocity = _wander_direction * _wander_speed
-	else:
-		# Stop moving when paused
-		enemy.velocity = Vector2.ZERO
+	# Set velocity based on wander direction and speed (preserve knockback)
+	if enemy.knockback_timer > 0.0:
+		return  # Don't override knockback during knockback period
+	
+	# Move in wander direction
+	var wander_velocity = _wander_direction * (enemy.move_speed * wander_speed_multiplier)
+	enemy.velocity = wander_velocity
 
 func exit(_to):
 	# Clean up when leaving wander state

@@ -51,7 +51,13 @@ func physics_update(_dt):
 	# Make the enemy actually move by setting their velocity
 	# walk_direction is which way to go, move_speed is how fast
 	enemy.direction = walk_direction
-	enemy.velocity = enemy.direction * enemy.move_speed * 0.5  # Walk slower than chase
+	# Move toward destination at walking speed (preserve knockback)
+	if enemy.knockback_timer > 0.0:
+		print("Walk state [", enemy.name, "]: knockback active, preserving knockback")
+		return  # Don't override knockback during knockback period
+	
+	# Move towards target
+	enemy.velocity = walk_direction * enemy.move_speed
 
 	# Keep updating the animation in case direction changed
 	enemy.play_anim("walk")

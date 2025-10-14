@@ -1,7 +1,14 @@
-## HURTBOX - Receives Damage and Forwards to Health
+## PROFESSIONAL HURTBOX SYSTEM - Receives Damage via Clean Interface
 ##
-## Simple interface: take_hit() method that finds health component and applies damage.
-## No complex collision logic - just clean damage forwarding.
+## Core Responsibilities:
+## • Receives damage through take_hit(damage, knockback, source_pos) method calls
+## • Automatically finds and forwards damage to Health component  
+## • Applies knockback to parent entity (Player/Enemy/Plant)
+## • Provides damage immunity period to prevent rapid-fire damage
+## • Collision layers configured in scene editor, not hardcoded in script
+##
+## Usage: Just add to scene and set collision layer. Everything else is automatic.
+## Setup methods (setup_player_hurtbox, etc.) exist for organization but are optional.
 
 extends Area2D
 class_name HurtBox
@@ -23,12 +30,10 @@ func _process(delta):
 func take_hit(damage_amount: int, knockback_force: float, source_position: Vector2):
 	"""Main interface - called by hitboxes to deal damage"""
 	if not _health_component:
-		print("HurtBox: No health component found!")
 		return
 		
-	# Check damage immunity
+	# Check damage immunity (prevents rapid damage from same source)
 	if _damage_immunity_timer > 0.0:
-		print("HurtBox: Still immune to damage (" + str(_damage_immunity_timer) + "s left)")
 		return
 		
 	# Start immunity period
@@ -37,9 +42,9 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 	# Apply damage
 	_health_component.take_damage(damage_amount)
 	
-	# Apply knockback to parent
+	# Apply knockback to parent (skip for plants and environment objects)
 	var parent = get_parent()
-	if parent and parent.has_method("apply_knockback") and knockback_force > 0:
+	if parent and parent.has_method("apply_knockback") and knockback_force > 0 and not parent.is_in_group("environment"):
 		var direction = (global_position - source_position).normalized()
 		var knockback_vector = direction * knockback_force
 		parent.apply_knockback(knockback_vector)
@@ -82,16 +87,22 @@ func get_current_health() -> int:
 # ─────────── MODULAR SETUP METHODS ───────────
 # Setup methods for different entity types - now just for debugging
 func setup_player_hurtbox():
-	"""Configure this hurtbox to receive damage as a player"""
-	print("Player HurtBox setup called - Scene Layer: ", collision_layer, " Scene Mask: ", collision_mask)
+	"""Setup method for player hurtbox - collision layers read from scene"""
+	# This method exists for organization/debugging but collision settings
+	# are configured in the scene editor, not in code
+	pass
 
 func setup_enemy_hurtbox():
-	"""Configure this hurtbox to receive damage as an enemy"""
-	print("Enemy HurtBox setup called - Scene Layer: ", collision_layer, " Scene Mask: ", collision_mask)
+	"""Setup method for enemy hurtbox - collision layers read from scene"""
+	# This method exists for organization/debugging but collision settings
+	# are configured in the scene editor, not in code
+	pass
 
 func setup_environment_hurtbox():
-	"""Configure this hurtbox for environment objects (plants, etc.)"""
-	print("Environment HurtBox setup called - Scene Layer: ", collision_layer, " Scene Mask: ", collision_mask)
+	"""Setup method for environment hurtbox - collision layers read from scene"""
+	# This method exists for organization/debugging but collision settings
+	# are configured in the scene editor, not in code
+	pass
 
 # Note: Visual effects and death handling are now managed by the Health component
 

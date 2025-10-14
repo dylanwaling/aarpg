@@ -1,18 +1,25 @@
-## HITBOX - Deals Damage to Targets
+## PROFESSIONAL HITBOX SYSTEM - Deals Damage via Clean Interface
 ##
-## Simple, focused responsibility: When activated, find targets and damage them once.
-## No complex timing, no state management - just pure damage dealing.
+## Core Responsibilities:
+## • Detects collisions with HurtBox components when activated
+## • Calls hurtbox.take_hit(damage, knockback, source_pos) for each target
+## • Prevents hitting the same target multiple times per activation
+## • Completely controlled via activate()/deactivate() methods
+## • Collision layers set dynamically by AttackState or configured in scene
+##
+## Usage: Set damage/knockback_force properties, then call activate() to start dealing damage.
+## Automatically deactivates when appropriate or call deactivate() manually.
 
 extends Area2D
 class_name Hitbox
 
-# ─────────── CONFIGURATION ───────────
-@export var damage: int = 10
-@export var knockback_force: float = 50.0
+# ─────────── DAMAGE CONFIGURATION ───────────
+@export var damage: int = 10                    # Damage dealt to each target hit
+@export var knockback_force: float = 50.0       # Knockback strength applied to targets
 
-# ─────────── INTERNAL STATE ───────────
-var _is_active: bool = false
-var _targets_hit: Array[Node] = []
+# ─────────── INTERNAL STATE (DO NOT MODIFY) ───────────
+var _is_active: bool = false                    # Whether hitbox is currently dealing damage
+var _targets_hit: Array[Node] = []              # Prevents hitting same target multiple times
 
 func _ready():
 	# Start disabled
