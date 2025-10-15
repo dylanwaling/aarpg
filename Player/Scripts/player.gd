@@ -20,8 +20,6 @@ extends CharacterBody2D
 
 # Note: Attack and Dash settings configured in their respective state files (scene-first design)
 
-# Note: Dash settings are configured in DashState.gd to follow scene-first principles
-
 # ─────────── SPRITE DISPLAY CONSTANTS ───────────
 const SPRITE_FLIP_OFFSET: int = -1              # Pixel offset to center sprite when facing left
 

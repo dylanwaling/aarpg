@@ -129,23 +129,20 @@ func update(delta):
 				# Handle horizontal dodging (left/right)
 				if player.direction.x < 0:  # Moving left
 					player.facing = Vector2.LEFT
-					player.sprite.flip_h = true
-					player.sprite.offset.x = -1
+					player.update_facing()  # Use centralized sprite management
 					player.play_anim("attack")  # Update animation immediately
 					_update_attack_effects()  # Update sword animation for new direction
 					new_dodge_direction = Vector2.LEFT
 				elif player.direction.x > 0:  # Moving right
 					player.facing = Vector2.RIGHT
-					player.sprite.flip_h = false
-					player.sprite.offset.x = 0
+					player.update_facing()  # Use centralized sprite management
 					player.play_anim("attack")  # Update animation immediately
 					_update_attack_effects()  # Update sword animation for new direction
 					new_dodge_direction = Vector2.RIGHT
 				# Handle vertical dodging (up/down) - switch animations mid-swing
 				elif player.direction.y < 0:  # Moving up
 					player.facing = Vector2.UP
-					player.sprite.flip_h = false
-					player.sprite.offset.x = 0
+					player.update_facing()  # Use centralized sprite management
 					# Seamlessly switch to attack_up animation at current progress
 					var current_position = player.anim.current_animation_position
 					player.anim.play("attack_up", -1, 1.0, false)
@@ -161,8 +158,7 @@ func update(delta):
 					new_dodge_direction = Vector2.UP
 				elif player.direction.y > 0:  # Moving down  
 					player.facing = Vector2.DOWN
-					player.sprite.flip_h = false
-					player.sprite.offset.x = 0
+					player.update_facing()  # Use centralized sprite management
 					# Seamlessly switch to attack_down animation at current progress
 					var current_position = player.anim.current_animation_position
 					player.anim.play("attack_down", -1, 1.0, false)
@@ -184,22 +180,14 @@ func update(delta):
 				# Normal attack movement - keep sprite locked to attack direction
 				if lock_facing:
 					player.facing = _locked_facing
-				player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
-				if _locked_facing == Vector2.LEFT:
-					player.sprite.offset.x = -1
-				else:
-					player.sprite.offset.x = 0
+					player.update_facing()  # Use centralized sprite management
 			
 			player.velocity = movement_velocity
 		else:
 			# No movement - keep sprite locked to attack direction
 			if lock_facing:
 				player.facing = _locked_facing
-			player.sprite.flip_h = (_locked_facing == Vector2.LEFT)
-			if _locked_facing == Vector2.LEFT:
-				player.sprite.offset.x = -1
-			else:
-				player.sprite.offset.x = 0
+				player.update_facing()  # Use centralized sprite management
 			player.velocity = Vector2.ZERO
 
 	# Handle attack effects transformation (scale-based flipping)
