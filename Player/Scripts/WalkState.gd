@@ -36,10 +36,5 @@ func update(_dt):
 
 # ─────────── INPUT HANDLING WHILE WALKING ───────────
 func handle_input(event):
-	# Allow actions while walking (combat mobility)
-	if event.is_action_pressed("attack"):
-		# Attack (may allow movement depending on AttackState settings)
-		player.change_state(player.attack_state)
-	elif event.is_action_pressed("dash") and player.dash_state.can_dash():
-		# Dash for quick burst movement
-		player.change_state(player.dash_state)
+	# Use shared function for common actions (attack and dash)
+	handle_common_actions(event)

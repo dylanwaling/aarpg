@@ -28,6 +28,8 @@ extends "res://Player/Scripts/PlayerState.gd"
 
 # ─────────── INTERNAL ATTACK STATE (DON'T MODIFY) ───────────
 var _time_left: float = 0.0                         # Countdown timer for attack duration
+var _default_hitbox_scene: PackedScene              # Cached default hitbox scene to avoid repeated preload
+var _attack_sound: AudioStream                      # Cached attack sound to avoid repeated preload
 var _locked_facing: Vector2 = Vector2.DOWN          # Direction locked when attack started  
 var _current_hitbox: Node = null                    # Active damage hitbox reference
 var _hitbox_created: bool = false                   # Whether hitbox has been created this attack
@@ -90,7 +92,9 @@ func _play_attack_sound():
 	else:
 		# Fallback: Create temporary audio player for attack sound
 		var temp_audio = AudioStreamPlayer2D.new()
-		temp_audio.stream = preload("res://Player/Audio/SwordSwoosh.wav")
+		if not _attack_sound:
+			_attack_sound = preload("res://Player/Audio/SwordSwoosh.wav")
+		temp_audio.stream = _attack_sound
 		player.add_child(temp_audio)
 		temp_audio.play()
 		# Clean up after sound finishes
@@ -239,7 +243,9 @@ func _setup_attack_hitbox():
 	"""Prepares the hitbox system (called when attack starts)"""
 	# Load default hitbox if none assigned in inspector
 	if not hitbox_scene:
-		hitbox_scene = preload("res://GeneralNodes/Hitbox/Hitbox.tscn")
+		if not _default_hitbox_scene:
+			_default_hitbox_scene = preload("res://GeneralNodes/Hitbox/Hitbox.tscn")
+		hitbox_scene = _default_hitbox_scene
 		if not hitbox_scene:
 			return
 	

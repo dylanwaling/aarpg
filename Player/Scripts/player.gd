@@ -33,6 +33,9 @@ var current           = null                    # Currently active state (idle/w
 @onready var anim: AnimationPlayer   = $AnimationPlayer # Controls all player animations (walk, idle, attack)
 @onready var health_component: Node2D = $Health         # The health management component
 @onready var hurtbox: Area2D         = $HurtBox        # Receives damage from enemy attacks
+@onready var attack_fx_sprite: Sprite2D = $Sprite2D/AttackFX/AttackEffectsSprite # Attack visual effects sprite
+@onready var attack_fx_anim: AnimationPlayer = $Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer # Attack effects animation
+@onready var attack_fx_node: Node2D  = $Sprite2D/AttackFX # Attack effects container node
 @onready var idle_state              = $States/IdleState    # Handles when player is standing still
 @onready var walk_state              = $States/WalkState   # Handles when player is moving around
 @onready var attack_state            = $States/AttackState # Handles when player is attacking
@@ -45,7 +48,6 @@ func _ready():
 		s.player = self
 
 	# Make sure attack effects are hidden when the game starts (they show during attacks)
-	var attack_fx_sprite = $Sprite2D/AttackFX/AttackEffectsSprite
 	attack_fx_sprite.visible = false
 
 	# Add player to group so enemies can find us
@@ -160,12 +162,12 @@ func play_anim(state_name: String):
 # Note: Player receives damage through this flow:
 # Enemy Hitbox → Player HurtBox → Health Component → Player.take_damage() → Death/Knockback
 
-func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
+func take_damage(_amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	"""Called by Health component when player takes damage (via HurtBox system)"""
-	if not health_component:
-		push_error("Player: No health component found!")
-		return
-	health_component.take_damage(amount)
+	# This function is called BY the Health component, not the other way around!
+	# Add any immediate damage reactions here (screen flash, damage sounds, etc.)
+	# The Health component already processed the damage before calling this
+	pass  # Currently no immediate damage reactions implemented
 
 func heal(amount: int):
 	"""Restore player health (for potions, etc.)"""

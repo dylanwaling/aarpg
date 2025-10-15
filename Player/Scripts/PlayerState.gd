@@ -33,3 +33,14 @@ func update(_delta): pass
 
 # Called during physics updates (for movement and collision)
 func physics_update(_delta): pass
+
+# ─────────── SHARED UTILITY FUNCTIONS ───────────
+func handle_common_actions(event):
+	"""Handle attack and dash inputs that work from any state"""
+	if event.is_action_pressed("attack"):
+		player.change_state(player.attack_state)
+		return true
+	elif event.is_action_pressed("dash") and player.dash_state.can_dash():
+		player.change_state(player.dash_state)
+		return true
+	return false

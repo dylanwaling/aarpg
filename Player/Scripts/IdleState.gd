@@ -27,10 +27,5 @@ func update(_dt):
 
 # ─────────── INPUT HANDLING WHILE IDLE ───────────
 func handle_input(event):
-	# Check for action button presses
-	if event.is_action_pressed("attack"):
-		# Start attack sequence
-		player.change_state(player.attack_state)
-	elif event.is_action_pressed("dash") and player.dash_state.can_dash():
-		# Dash if available (not on cooldown)
-		player.change_state(player.dash_state)
+	# Use shared function for common actions (attack and dash)
+	handle_common_actions(event)
