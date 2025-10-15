@@ -14,6 +14,15 @@ extends CharacterBody2D
 # ─────────── GAME SETTINGS YOU CAN ADJUST ───────────
 @export var move_speed: float = 100.0  # How many pixels per second the player moves
 
+# ── KNOCKBACK SETTINGS ──
+@export var knockback_strength: float = 200.0   # How strong the knockback force is when hit
+@export var knockback_duration: float = 0.3     # How long knockback lasts (seconds)
+
+# ── COMBAT SETTINGS ──
+@export var attack_damage: int = 20              # How much damage player attacks deal
+@export var dash_speed: float = 300.0            # Speed during dash ability
+@export var dash_duration: float = 0.2           # How long dash lasts (seconds)
+
 const SPRITE_FLIP_OFFSET: int = -1     # Visual centering offset when sprite is flipped left
 
 # ─────────── LIVE INFORMATION THAT CHANGES DURING PLAY ───────────

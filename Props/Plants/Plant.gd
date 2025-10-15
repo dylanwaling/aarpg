@@ -5,6 +5,12 @@
 
 extends Node
 
+# ─────────── PLANT SETTINGS YOU CAN ADJUST ───────────
+@export var plant_health: int = 30              # How much damage needed to break plant
+@export var respawn_time: float = 3.0           # Seconds until plant grows back
+@export var show_health_display: bool = true    # Whether to show health numbers above plant
+@export var break_instantly: bool = false       # If true, any damage breaks plant regardless of health
+
 # ── PLANT STATS ──
 var is_broken: bool = false
 
@@ -21,10 +27,10 @@ func _ready():
 	if hurtbox and hurtbox.has_method("setup_environment_hurtbox"):
 		hurtbox.setup_environment_hurtbox()  # Set up collision for plant
 	
-	# Set up health component for plants - 30 HP for 2 hits (15 damage × 2 = 30)
+	# Set up health component for plants using configurable settings
 	var health_component = get_node("Health")
 	if health_component:
-		health_component.setup_plant_health(30, true)  # 30 HP, show display
+		health_component.setup_plant_health(plant_health, show_health_display)
 		# Health component will auto-connect to _on_health_died method
 
 func break_plant():
@@ -53,8 +59,8 @@ func break_plant():
 		if collision_shape:
 			collision_shape.set_deferred("disabled", true)
 		
-	# Respawn the plant after 3 seconds
-	await get_tree().create_timer(3.0).timeout
+	# Respawn the plant after configured time
+	await get_tree().create_timer(respawn_time).timeout
 	respawn_plant()
 
 func respawn_plant():
@@ -86,9 +92,16 @@ func respawn_plant():
 			collision_shape.set_deferred("disabled", false)
 
 # Alternative damage method for compatibility with other damage systems
-func take_damage(_amount: int, _hit_position: Vector2 = Vector2.ZERO):
-	"""Alternative method for damage - breaks the plant regardless of damage amount"""
-	break_plant()
+func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
+	"""Alternative method for damage - behavior depends on break_instantly setting"""
+	if break_instantly:
+		# Instant break mode - any damage destroys plant
+		break_plant()
+	else:
+		# Normal mode - use health component for proper damage tracking
+		var health_component = get_node("Health")
+		if health_component:
+			health_component.take_damage(amount)
 
 func _on_health_died():
 	"""Called when health component reaches 0"""

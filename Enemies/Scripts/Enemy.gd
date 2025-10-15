@@ -16,10 +16,22 @@ extends CharacterBody2D
 
 # ── COMBAT STATS (EASY TO ADJUST) ──
 @export var damage: int = 10                   # How much damage this enemy deals to the player
+@export var max_health: int = 30               # Starting health points for this enemy
 
 # ── AI BEHAVIOR SETTINGS ──
 @export var detection_range: float = 100.0     # How close the player needs to be for enemy to notice
 @export var attack_range: float = 32.0         # How close the player needs to be for enemy to attack
+@export var wander_range: float = 50.0         # How far enemy wanders when idle
+@export var chase_speed_multiplier: float = 1.5 # Speed boost when chasing player
+
+# ── KNOCKBACK SETTINGS ──
+@export var knockback_resistance: float = 0.8  # How much knockback affects this enemy (0.0 = no knockback, 1.0 = full)
+@export var knockback_recovery_time: float = 0.4 # How long enemy is stunned by knockback
+
+# ── ATTACK TIMING ──
+@export var attack_cooldown: float = 1.5        # Time between attacks (seconds)
+@export var attack_windup_time: float = 0.5     # Warning time before attack hits
+@export var post_attack_delay: float = 0.8      # Recovery time after attacking
 const SPRITE_FLIP_OFFSET: int = -1             # Visual centering offset when sprite is flipped left
 
 # ─────────── LIVE INFORMATION THAT CHANGES DURING PLAY ───────────

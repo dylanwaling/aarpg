@@ -13,10 +13,13 @@
 extends Area2D
 class_name HurtBox
 
+# ─────────── DAMAGE IMMUNITY SETTINGS ───────────
+@export var damage_immunity_duration: float = 0.5  # Seconds of immunity after taking damage
+@export var knockback_multiplier: float = 1.0       # Multiplier for knockback force received
+
 # ─────────── INTERNAL REFERENCES ───────────
 var _health_component: Node = null
 var _damage_immunity_timer: float = 0.0
-var _damage_immunity_duration: float = 0.5  # Half second of immunity after taking damage
 
 func _ready():
 	# Find the Health component
@@ -37,7 +40,8 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 		return
 		
 	# Start immunity period
-	_damage_immunity_timer = _damage_immunity_duration
+		# Apply immunity period (prevents rapid-fire damage)
+	_damage_immunity_timer = damage_immunity_duration
 	
 	# Apply damage
 	_health_component.take_damage(damage_amount)
@@ -47,7 +51,8 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 	if parent and parent.has_method("apply_knockback") and knockback_force > 0 and not parent.is_in_group("environment"):
 		# Direction FROM source TO target (pushes away from attacker)
 		var direction = (global_position - source_position).normalized()
-		var knockback_vector = direction * knockback_force
+		var final_knockback_force = knockback_force * knockback_multiplier
+		var knockback_vector = direction * final_knockback_force
 		parent.apply_knockback(knockback_vector)
 
 func _find_health_component():
