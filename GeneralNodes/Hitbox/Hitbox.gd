@@ -14,8 +14,8 @@ extends Area2D
 class_name Hitbox
 
 # ─────────── DAMAGE CONFIGURATION ───────────
-@export var damage: int = 10                    # Damage dealt to each target hit
-@export var knockback_force: float = 50.0       # Knockback strength applied to targets
+@export var damage: int = 15                    # Damage dealt to each target hit
+@export var knockback_force: float = 100.0      # Knockback strength applied to targets
 
 # ─────────── INTERNAL STATE (DO NOT MODIFY) ───────────
 var _is_active: bool = false                    # Whether hitbox is currently dealing damage

@@ -1,7 +1,12 @@
 for refining code
-#1 clean up code
-#2 check that the settings respect the scene settings
+#1 can you clean up this code as best as possible
+#2 check that the settings respect the scene settings first
 #3 make sure funtions all lead and have purpose to somewhere and are being used corectly
-#4 make sure all connected documents are be used properly and efficeintly
-#5 check for duplicate methods
-#6 check over the code one last time and add comments explaing everything in the code so i can understand whta the code is doing in english and add headers
+#3.5 make sure its main tied nodes hurtbox and health are being utilized correctly
+#4 make sure all connected files are be used properly and efficeintly
+#5 check one last time for duplicate methods, that its all scene first, and that everything is structured well
+#6 check over the code one last time and add comments that are straight to the point explaing everything in the code so i can understand whta the code is doing in english and add headers that are like this # ─────────── ATTACK SETTINGS YOU CAN TWEAK ───────────
+
+
+
+so right now my plant is setup like this. i want to be organized well so i want to set up a props to be able to easily set them up so if i have multiple plant types it works easiy to have diffent base settings for each prop as in like health or respawm time ot damage imunity i made a props gd i want to seperate props from enimies

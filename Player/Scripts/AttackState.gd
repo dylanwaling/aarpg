@@ -20,10 +20,7 @@ extends "res://Player/Scripts/PlayerState.gd"
 @export var attack_movement_speed: float = 30.0     # If movement allowed, how fast (slower than normal)
 @export var lock_facing: bool = true                # If true, player can't turn around mid-attack
 
-# ─────────── DAMAGE AND HITBOX SETTINGS ───────────
-# ── COMBAT STATS (EASY TO ADJUST) ──
-@export var attack_damage: int = 15                 # How much damage each attack deals
-@export var knockback_strength: float = 100.0       # How hard enemies get knocked back
+# ─────────── ATTACK TIMING SETTINGS ───────────
 @export var hitbox_delay: float = 0.1               # Delay before hitbox becomes active (wind-up time)
 @export var hitbox_duration: float = 0.15           # How long the damage hitbox stays active
 @export var attack_range: float = 70.0              # Attack range - distance to center of hitbox (adjustable for buffs/upgrades)
@@ -278,9 +275,7 @@ func _create_damage_hitbox():
 	_current_hitbox.collision_layer = 4  # Layer 3 
 	_current_hitbox.collision_mask = 2048 + 32  # Detects Layer 12 (enemies) + Layer 6 (plants)
 	
-	# Set up damage values using new professional system
-	_current_hitbox.damage = attack_damage
-	_current_hitbox.knockback_force = knockback_strength
+	# Hitbox uses its own @export damage and knockback_force values from scene
 	
 	# Wait one frame for collision system to register, then activate
 	await get_tree().process_frame
