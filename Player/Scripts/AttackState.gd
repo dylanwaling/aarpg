@@ -14,47 +14,47 @@
 class_name AttackState
 extends "res://Player/Scripts/PlayerState.gd"
 
-# ─────────── ATTACK SETTINGS YOU CAN TWEAK ───────────
-@export var attack_duration: float = 0.35           # How long the attack lasts in seconds
-@export var stop_movement: bool = false             # If true, player can't move during attacks
-@export var attack_movement_speed: float = 30.0     # If movement allowed, how fast (slower than normal)
-@export var lock_facing: bool = true                # If true, player can't turn around mid-attack
+# ─────────── ATTACK BEHAVIOR YOU CAN TWEAK ───────────
+@export var attack_duration: float = 0.35           # Total attack animation duration in seconds
+@export var stop_movement: bool = false             # Whether to stop player movement during attack
+@export var attack_movement_speed: float = 30.0     # Movement speed during attack (if allowed)
+@export var lock_facing: bool = true                # Whether to lock facing direction during attack
 
-# ─────────── ATTACK TIMING SETTINGS ───────────
-@export var hitbox_delay: float = 0.1               # Delay before hitbox becomes active (wind-up time)
-@export var hitbox_duration: float = 0.15           # How long the damage hitbox stays active
-@export var attack_range: float = 70.0              # Attack range - distance to center of hitbox (adjustable for buffs/upgrades)
-@export var hitbox_scene: PackedScene               # Drag your Hitbox.tscn here in the inspector
+# ─────────── DAMAGE HITBOX YOU CAN TWEAK ───────────
+@export var hitbox_delay: float = 0.1               # Wind-up time before damage activates
+@export var hitbox_duration: float = 0.15           # How long damage hitbox stays active
+@export var attack_range: float = 70.0              # Attack reach distance (upgradeable)
+@export var hitbox_scene: PackedScene               # Hitbox scene file (drag from FileSystem)
 
-# ─────────── INTERNAL TRACKING VARIABLES ───────────
-var _time_left: float = 0.0                # Counts down from attack_duration to 0
-var _locked_facing: Vector2 = Vector2.DOWN  # Remembers which way player was facing when attack started
-var _current_hitbox: Node = null           # Reference to the active damage hitbox
-var _hitbox_created: bool = false          # Tracks if we've already created the hitbox this attack
+# ─────────── INTERNAL ATTACK STATE (DON'T MODIFY) ───────────
+var _time_left: float = 0.0                         # Countdown timer for attack duration
+var _locked_facing: Vector2 = Vector2.DOWN          # Direction locked when attack started  
+var _current_hitbox: Node = null                    # Active damage hitbox reference
+var _hitbox_created: bool = false                   # Whether hitbox has been created this attack
 
 
 
+# ─────────── STARTING AN ATTACK ───────────
 func enter(_from):
-	# Remember which direction the player was facing when the attack started
-	# This prevents them from spinning around mid-attack which looks weird
+	# Lock facing direction to prevent mid-attack spinning
 	if lock_facing:
 		_locked_facing = player.facing
 
-	# Decide if the player can move during the attack
+	# Handle movement during attack
 	if stop_movement:
-		player.velocity = Vector2.ZERO  # Stop completely
-	# If stop_movement is false, we'll handle slow movement in the update() function
+		player.velocity = Vector2.ZERO  # Complete stop
+	# Otherwise allow slow movement (handled in update())
 
-	# Start the character's attack animation (attack_up, attack_down, or attack_side)
+	# Start attack animation matching facing direction
 	player.play_anim("attack")
 	
-	# Show the visual effects (like sword swoosh) and play attack sounds
+	# Show visual effects and play sounds
 	_show_and_play_attack_effects()
 	
-	# Set up the damage hitbox with a slight delay for wind-up
+	# Set up damage hitbox with wind-up delay
 	_setup_attack_hitbox()
 
-	# Start counting down the attack timer
+	# Initialize attack timing
 	_time_left = attack_duration
 	_hitbox_created = false
 
@@ -83,18 +83,17 @@ func _show_and_play_attack_effects():
 		_play_attack_sound()
 
 func _play_attack_sound():
-	# Try to find an AudioStreamPlayer2D node for attack sounds
-	# You can add this to your player scene if you want sound effects
+	# Try to find dedicated AttackAudio node first
 	var audio_player = player.get_node_or_null("AttackAudio")
 	if audio_player and audio_player is AudioStreamPlayer2D:
 		audio_player.play()
 	else:
-		# Alternatively, create a temporary AudioStreamPlayer2D for the sound
+		# Fallback: Create temporary audio player for attack sound
 		var temp_audio = AudioStreamPlayer2D.new()
 		temp_audio.stream = preload("res://Player/Audio/SwordSwoosh.wav")
 		player.add_child(temp_audio)
 		temp_audio.play()
-		# Clean up after the sound finishes
+		# Clean up after sound finishes
 		temp_audio.finished.connect(func(): temp_audio.queue_free())
 
 func _update_attack_effects():
@@ -111,8 +110,9 @@ func _update_attack_effects():
 	else:  # Up/down attacks
 		attack_fx_node.scale.x = 1       # Always normal scale for up/down
 
+# ─────────── ATTACK LOGIC EVERY FRAME ───────────
 func update(delta):
-	# Handle movement during attack (slow movement if not stopped)
+	# Handle movement during attack (if not completely stopped)
 	if not stop_movement:
 		# Allow movement during attack with dodge boost for retreat
 		if player.direction != Vector2.ZERO:
@@ -218,30 +218,32 @@ func update(delta):
 		# Player isn't trying to move, so go back to idle
 		player.change_state(player.idle_state)
 
+# ─────────── INPUT HANDLING DURING ATTACK ───────────
 func handle_input(_event):
-	# (Optional) If you later want to buffer combo inputs, you'd read them here.
-	# For now, we ignore all inputs until the attack finishes.
+	# Player is committed to attack - no input changes allowed
+	# Future: Could add combo buffering here
 	pass
 
+# ─────────── ATTACK PHYSICS ───────────
 func physics_update(_delta):
-	# No special physics needed; Player.gd will still call move_and_slide().
-	# If you want slight "lunge" movement during attack, set player.velocity here.
+	# Physics handled by movement logic in update() function
+	# Player.gd calls move_and_slide() automatically
 	pass
 
+# ─────────── WHEN LEAVING ATTACK STATE ───────────
 func exit(_to):
-	# Clean up any active hitbox
+	# Remove active damage hitbox
 	_cleanup_hitbox()
 	
-	# Hide the attack effects when exiting the attack state
+	# Clean up visual effects
 	var attack_fx_sprite = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite")
-	attack_fx_sprite.visible = false
-	
-	# Stop any playing attack effect animation
 	var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
-	attack_fx_anim.stop()
-	
-	# Reset scale transformation (professional cleanup)
 	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
+	
+	# Hide effects and stop animations
+	attack_fx_sprite.visible = false
+	attack_fx_anim.stop()
+	# Reset visual transformations
 	attack_fx_node.scale.x = 1
 
 # ─────────── HITBOX SYSTEM METHODS ───────────
@@ -312,9 +314,9 @@ func _cleanup_hitbox():
 		_current_hitbox.queue_free()
 		_current_hitbox = null
 
-# ─────────── ATTACK RANGE MODIFICATION METHODS ───────────
+# ─────────── ATTACK RANGE UPGRADE SYSTEM ───────────
 func set_attack_range(new_range: float):
-	"""Set attack range - useful for buffs, upgrades, or different weapons"""
+	# Set attack range - useful for weapon upgrades or buffs
 	attack_range = new_range
 
 func get_attack_range() -> float:

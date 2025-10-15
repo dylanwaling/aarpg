@@ -16,28 +16,30 @@
 class_name WalkState
 extends "res://Player/Scripts/PlayerState.gd"
 
+# ─────────── ENTERING WALK STATE ───────────
 func enter(_from):
-	# Start playing the walking animation right away
+	# Start walking animation immediately
 	player.play_anim("walk")
 
+# ─────────── MOVEMENT LOGIC EVERY FRAME ───────────
 func update(_dt):
-	# If the player stopped pressing movement keys, go back to idle
+	# Return to idle if movement input stops
 	if player.direction == Vector2.ZERO:
 		player.change_state(player.idle_state)
 		return
 
-	# Make the player actually move by setting their velocity
-	# direction is which way they want to go, move_speed is how fast
+	# Apply movement velocity based on input direction
 	player.velocity = player.direction * player.move_speed
 
-	# Keep updating the animation in case they changed direction while walking
+	# Update animation to match current facing direction
 	player.play_anim("walk")
 
+# ─────────── INPUT HANDLING WHILE WALKING ───────────
 func handle_input(event):
-	# Player can still attack or dash while walking
+	# Allow actions while walking (combat mobility)
 	if event.is_action_pressed("attack"):
-		# Switch to attack state (which will handle stopping movement if needed)
+		# Attack (may allow movement depending on AttackState settings)
 		player.change_state(player.attack_state)
 	elif event.is_action_pressed("dash") and player.dash_state.can_dash():
-		# Switch to dash state for a quick burst of speed
+		# Dash for quick burst movement
 		player.change_state(player.dash_state)

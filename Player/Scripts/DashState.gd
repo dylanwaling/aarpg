@@ -16,83 +16,93 @@
 class_name DashState
 extends "res://Player/Scripts/PlayerState.gd"
 
-# ─────────── DASH SETTINGS YOU CAN ADJUST ───────────
-@export var dash_speed: float = 300.0       # How fast the dash moves (much faster than walking)
-@export var dash_duration: float = 0.2      # How long the dash lasts in seconds
-@export var dash_cooldown: float = 1.0      # How many seconds before you can dash again
-@export var lock_direction: bool = true     # If true, you can't change direction during dash
+# ─────────── DASH BEHAVIOR YOU CAN TWEAK ───────────
+@export var dash_speed: float = 300.0           # Speed during dash (3x normal walking speed)
+@export var dash_duration: float = 0.2          # How long dash lasts in seconds
+@export var dash_cooldown: float = 1.0          # Cooldown before next dash is allowed
+@export var lock_direction: bool = true         # Whether to lock facing direction during dash
 
-# ─────────── INTERNAL DASH TRACKING ───────────
-var _time_left: float = 0.0                # Counts down from dash_duration to 0
-var _dash_direction: Vector2 = Vector2.ZERO # Which direction we're dashing (locked in)
-var _can_dash: bool = true                  # Whether dash is off cooldown and available
+# ─────────── INTERNAL DASH STATE (DON'T MODIFY) ───────────
+var _time_left: float = 0.0                     # Countdown timer for dash duration
+var _dash_direction: Vector2 = Vector2.ZERO     # Direction locked in when dash starts
+var _can_dash: bool = true                      # Whether dash is available (not on cooldown)
+var _cooldown_timer: Timer                      # Reusable timer for cooldown management
 
+# ─────────── STARTING A DASH ───────────
 func enter(_from):
 	# Check if dash is available (not on cooldown)
 	if not _can_dash:
-		# Dash is on cooldown, so we can't dash right now
-		# Go back to whatever the player should be doing instead
+		# Dash is on cooldown - return to appropriate state
 		if player.direction != Vector2.ZERO:
-			# Player is trying to move, so switch to walking
-			player.change_state(player.walk_state)
+			player.change_state(player.walk_state)  # Keep moving
 		else:
-			# Player isn't moving, so go back to idle
-			player.change_state(player.idle_state)
+			player.change_state(player.idle_state)  # Stand still
 		return
 	
-	# Lock in the dash direction based on which way the player is currently facing
+	# Lock in dash direction based on current facing direction
 	_dash_direction = player.facing
-	# Start the dash timer
 	_time_left = dash_duration
 	
-	# Set initial dash velocity
+	# Set dash velocity for immediate movement
 	player.velocity = _dash_direction * dash_speed
 	
-	# Play appropriate animation (walk for now, can be changed to "dash" later)
+	# Play movement animation (can change to "dash" animation if available)
 	player.play_anim("walk")
 	
-	# Start cooldown
+	# Start cooldown period
 	_can_dash = false
 	_start_cooldown()
 
+# ─────────── DASH TIMING EVERY FRAME ───────────
 func update(delta):
-	# Keep facing locked during dash if enabled
+	# Lock facing direction during dash if enabled
 	if lock_direction:
 		player.facing = _dash_direction
 	
-	# Count down dash timer
+	# Count down remaining dash time
 	_time_left -= delta
 	
 	# End dash when timer expires
 	if _time_left <= 0.0:
-		# Transition based on current input
+		# Transition to next state based on current input
 		if player.direction != Vector2.ZERO:
 			player.change_state(player.walk_state)
 		else:
 			player.change_state(player.idle_state)
 
+# ─────────── DASH MOVEMENT PHYSICS ───────────
 func physics_update(_delta):
-	# Maintain dash velocity throughout the dash
+	# Maintain consistent dash velocity throughout duration
 	player.velocity = _dash_direction * dash_speed
 
+# ─────────── COOLDOWN MANAGEMENT ───────────
 func _start_cooldown():
-	var cooldown_timer = Timer.new()
-	add_child(cooldown_timer)
-	cooldown_timer.wait_time = dash_cooldown
-	cooldown_timer.one_shot = true
-	cooldown_timer.timeout.connect(_reset_dash_availability)
-	cooldown_timer.start()
+	# Create cooldown timer if it doesn't exist (reusable approach)
+	if not _cooldown_timer:
+		_cooldown_timer = Timer.new()
+		add_child(_cooldown_timer)
+		_cooldown_timer.one_shot = true
+		_cooldown_timer.timeout.connect(_reset_dash_availability)
+	
+	# Start cooldown countdown
+	_cooldown_timer.wait_time = dash_cooldown
+	_cooldown_timer.start()
 
 func _reset_dash_availability():
+	# Dash cooldown finished - allow dashing again
 	_can_dash = true
 
+# ─────────── DASH AVAILABILITY CHECK ───────────
 func can_dash() -> bool:
+	# Returns true if dash is available (not on cooldown)
 	return _can_dash
 
+# ─────────── INPUT HANDLING DURING DASH ───────────
 func handle_input(_event):
-	# No input handling during dash
+	# Player is locked into dash - no input changes allowed
 	pass
 
+# ─────────── WHEN LEAVING DASH STATE ───────────
 func exit(_to):
-	# No special cleanup needed
+	# Dash state is self-contained - no cleanup needed
 	pass

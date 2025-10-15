@@ -15,9 +15,10 @@
 class_name PlayerState
 extends Node
 
-# This gets filled in by the Player controller so each state can control the player
-var player
+# ─────────── PLAYER REFERENCE ───────────
+var player  # Reference to the Player that owns this state (set automatically)
 
+# ─────────── STATE INTERFACE FUNCTIONS ───────────
 # Called when this state becomes active (like switching from idle to walk)
 func enter(_from): pass
 

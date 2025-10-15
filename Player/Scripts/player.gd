@@ -11,23 +11,24 @@
 class_name Player
 extends CharacterBody2D
 
-# ─────────── GAME SETTINGS YOU CAN ADJUST ───────────
-@export var move_speed: float = 100.0  # How many pixels per second the player moves
+# ─────────── PLAYER MOVEMENT YOU CAN TWEAK ───────────
+@export var move_speed: float = 100.0           # Base walking speed in pixels per second
 
-# ── KNOCKBACK SETTINGS ──
-@export var knockback_strength: float = 200.0   # How strong the knockback force is when hit
-@export var knockback_duration: float = 0.3     # How long knockback lasts (seconds)
+# ─────────── KNOCKBACK PHYSICS YOU CAN TWEAK ───────────
+@export var knockback_strength: float = 200.0   # How hard player gets knocked back when hit
+@export var knockback_duration: float = 0.3     # How long knockback effect lasts in seconds
 
-# ── COMBAT SETTINGS ──
-@export var dash_speed: float = 300.0            # Speed during dash ability
-@export var dash_duration: float = 0.2           # How long dash lasts (seconds)
+# Note: Attack and Dash settings configured in their respective state files (scene-first design)
 
-const SPRITE_FLIP_OFFSET: int = -1     # Visual centering offset when sprite is flipped left
+# Note: Dash settings are configured in DashState.gd to follow scene-first principles
 
-# ─────────── LIVE INFORMATION THAT CHANGES DURING PLAY ───────────
-var direction: Vector2 = Vector2.ZERO  # Which way the player is trying to move (WASD input)
-var facing: Vector2   = Vector2.DOWN   # Which direction the player sprite is facing (for animations)
-var current           = null           # Which state is currently controlling the player
+# ─────────── SPRITE DISPLAY CONSTANTS ───────────
+const SPRITE_FLIP_OFFSET: int = -1              # Pixel offset to center sprite when facing left
+
+# ─────────── INTERNAL STATE TRACKING (DON'T MODIFY) ───────────
+var direction: Vector2 = Vector2.ZERO           # Current input direction (WASD/arrow keys)
+var facing: Vector2   = Vector2.DOWN            # Which way sprite faces for animations
+var current           = null                    # Currently active state (idle/walk/attack/dash)
 
 # ─────────── CONNECTIONS TO CHILD NODES IN THE SCENE ───────────
 @onready var sprite: Sprite2D        = $Sprite2D        # The visual player sprite (gets flipped left/right)
@@ -175,9 +176,9 @@ func apply_knockback(knockback_force: Vector2):
 	# Set the knockback velocity immediately
 	velocity = knockback_force
 	
-	# Create a timer to gradually reduce the knockback (same as enemy)
+	# Create a timer to gradually reduce the knockback using scene-configured duration
 	var tween = create_tween()
-	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.3)
+	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, knockback_duration)
 
 func _apply_knockback_decay(current_knockback: Vector2):
 	"""Gradually reduce knockback velocity (matches enemy implementation)"""
