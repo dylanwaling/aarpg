@@ -49,3 +49,7 @@ func physics_update(_dt):
 	
 	# Idle state: enemy doesn't move
 	enemy.velocity = Vector2.ZERO
+
+func exit(_to):
+	# Clean up when leaving idle state
+	enemy.velocity = Vector2.ZERO

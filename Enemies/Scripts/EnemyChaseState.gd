@@ -42,6 +42,5 @@ func physics_update(_dt):
 	if enemy.knockback_timer > 0:
 		return  # Allow knockback system to control velocity
 	
-	# Move towards player
-	enemy.velocity = enemy.direction * enemy.move_speed	# Keep updating the animation to match movement direction
-	enemy.play_anim("walk")
+	# Move towards player at full speed
+	enemy.velocity = enemy.direction * enemy.move_speed

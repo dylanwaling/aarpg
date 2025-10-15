@@ -12,9 +12,8 @@
 class_name EnemyAttackState
 extends "res://Enemies/Scripts/EnemyState.gd"
 
-# ─────────── ATTACK SETTINGS YOU CAN TWEAK ───────────
+# ─────────── ATTACK SETTINGS (CONFIGURE IN SCENE INSPECTOR) ───────────
 @export var attack_duration: float = 1.5             # How long the attack lasts in seconds
-@export var attack_cooldown: float = 2.0             # How long to wait before attacking again
 @export var stop_movement: bool = true               # If true, enemy can't move during attacks
 @export var lock_facing: bool = true                 # If true, enemy can't turn around mid-attack
 
@@ -34,7 +33,7 @@ func enter(_from):
 	# Set cooldown flag and start attack
 	_can_attack_again = false
 	# Set the main attack cooldown timer to prevent immediate re-attacking
-	enemy.attack_cooldown_timer = attack_cooldown
+	enemy.attack_cooldown_timer = enemy.attack_cooldown
 	
 	# Remember which direction the enemy was facing when the attack started
 	if lock_facing:
@@ -71,7 +70,7 @@ func update(dt):
 		# Set a flag to make idle ignore player detection
 		enemy.post_attack_recovery = true
 		# Clear the flag after attack_cooldown seconds
-		get_tree().create_timer(attack_cooldown).timeout.connect(_enable_next_attack)
+		get_tree().create_timer(enemy.attack_cooldown).timeout.connect(_enable_next_attack)
 		return
 
 func _enable_next_attack():

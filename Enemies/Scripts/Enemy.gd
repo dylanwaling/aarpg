@@ -23,15 +23,17 @@ var post_attack_recovery: bool = false
 var knockback_timer: float = 0.0
 var attack_cooldown_timer: float = 0.0
 
+# ─────────── PERFORMANCE CACHE ───────────
+var _cached_player_distance: float = INF
+var _distance_cache_frame: int = -1
+
 # ─────────── NODE REFERENCES ───────────
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var anim: AnimationPlayer = $AnimationPlayer
 @onready var hitbox: Area2D = $HitBox
-@onready var hurtbox: Area2D = $HurtBox
 @onready var health_component: Node2D = $Health
 @onready var idle_state = $States/EnemyIdleState
 @onready var wander_state = $States/EnemyWanderState
-@onready var walk_state = $States/EnemyWalkState
 @onready var chase_state = $States/EnemyChaseState
 @onready var attack_state = $States/EnemyAttackState
 
@@ -95,7 +97,12 @@ func _on_health_changed(_new_health: int, _max_health: int):
 # ─────────── AI HELPERS ───────────
 func distance_to_player() -> float:
 	if target_player and not is_dead:
-		return global_position.distance_to(target_player.global_position)
+		# Cache distance calculation per frame for performance
+		var current_frame = Engine.get_process_frames()
+		if _distance_cache_frame != current_frame:
+			_cached_player_distance = global_position.distance_to(target_player.global_position)
+			_distance_cache_frame = current_frame
+		return _cached_player_distance
 	return INF
 
 func direction_to_player() -> Vector2:
