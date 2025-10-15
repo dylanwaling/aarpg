@@ -32,6 +32,7 @@ var current           = null                    # Currently active state (idle/w
 @onready var sprite: Sprite2D        = $Sprite2D        # The visual player sprite (gets flipped left/right)
 @onready var anim: AnimationPlayer   = $AnimationPlayer # Controls all player animations (walk, idle, attack)
 @onready var health_component: Node2D = $Health         # The health management component
+@onready var hurtbox: Area2D         = $HurtBox        # Receives damage from enemy attacks
 @onready var idle_state              = $States/IdleState    # Handles when player is standing still
 @onready var walk_state              = $States/WalkState   # Handles when player is moving around
 @onready var attack_state            = $States/AttackState # Handles when player is attacking
@@ -60,6 +61,14 @@ func _ready():
 			health_component.health_changed.connect(_on_health_changed)
 	else:
 		push_error("Player: Health component not found! Player won't be able to take damage.")
+
+	# Validate HurtBox component exists and is properly configured  
+	if hurtbox:
+		# HurtBox should auto-find Health component, but verify it worked
+		if not hurtbox.get_health_component():
+			push_error("Player: HurtBox couldn't find Health component! Player won't take damage from attacks.")
+	else:
+		push_error("Player: HurtBox not found! Player won't be able to receive damage from enemy attacks.")
 
 	# Start in Idle mode
 	change_state(idle_state)
@@ -147,9 +156,12 @@ func play_anim(state_name: String):
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
 
-# ─────────── HEALTH SYSTEM ───────────
+# ─────────── HEALTH & DAMAGE SYSTEM ───────────
+# Note: Player receives damage through this flow:
+# Enemy Hitbox → Player HurtBox → Health Component → Player.take_damage() → Death/Knockback
+
 func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
-	"""Called when enemies or hazards damage the player"""
+	"""Called by Health component when player takes damage (via HurtBox system)"""
 	if not health_component:
 		push_error("Player: No health component found!")
 		return
