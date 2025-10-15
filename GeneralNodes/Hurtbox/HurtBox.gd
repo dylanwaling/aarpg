@@ -7,8 +7,7 @@
 ## • Provides damage immunity period to prevent rapid-fire damage
 ## • Collision layers configured in scene editor, not hardcoded in script
 ##
-## Usage: Just add to scene and set collision layer. Everything else is automatic.
-## Setup methods (setup_player_hurtbox, etc.) exist for organization but are optional.
+## Usage: Just add to scene and configure collision layers in inspector. Everything else is automatic.
 
 extends Area2D
 class_name HurtBox
@@ -90,26 +89,4 @@ func get_current_health() -> int:
 		return _health_component.get_health()
 	return 0
 
-# ─────────── MODULAR SETUP METHODS ───────────
-# Setup methods for different entity types - now just for debugging
-func setup_player_hurtbox():
-	"""Setup method for player hurtbox - collision layers read from scene"""
-	# This method exists for organization/debugging but collision settings
-	# are configured in the scene editor, not in code
-	pass
-
-func setup_enemy_hurtbox():
-	"""Setup method for enemy hurtbox - collision layers read from scene"""
-	# This method exists for organization/debugging but collision settings
-	# are configured in the scene editor, not in code
-	pass
-
-func setup_environment_hurtbox():
-	"""Setup method for environment hurtbox - collision layers read from scene"""
-	# This method exists for organization/debugging but collision settings
-	# are configured in the scene editor, not in code
-	pass
-
-# Note: Visual effects and death handling are now managed by the Health component
-
-# End of modular HurtBox system
+# End of HurtBox system - all configuration handled via scene inspector

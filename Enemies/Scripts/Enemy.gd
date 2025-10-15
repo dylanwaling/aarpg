@@ -65,18 +65,10 @@ func _ready():
 	# Find the player in the scene so we can chase/attack them
 	target_player = get_tree().get_first_node_in_group("player")
 
-	# Configure using modular system
-	# Configure enemy to receive damage from player attacks
-	if hurtbox and hurtbox.has_method("setup_enemy_hurtbox"):
-		hurtbox.setup_enemy_hurtbox()  # Sets up collision layers for player damage
-	
+	# Components use their scene settings - sync with @export properties
 	if hitbox:
-		hitbox.damage = damage  # Set enemy damage using new professional system
+		hitbox.damage = damage  # Sync hitbox damage with enemy's @export damage
 		hitbox.knockback_force = 80.0  # Default enemy knockback
-	
-	if health_component and health_component.has_method("setup_enemy_health"):
-		health_component.auto_connect_to_parent = false  # Disable auto-connect to prevent duplicates
-		health_component.setup_enemy_health(60, true)  # 60 HP, show health display
 
 	# Add enemy to group so player and other systems can find us
 	add_to_group("enemy")

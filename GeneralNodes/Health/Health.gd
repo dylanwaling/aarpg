@@ -5,9 +5,9 @@
 ## • Automatic parent method connection (connects to _on_health_died, _on_damage_taken if they exist)
 ## • Visual health display with configurable styling
 ## • Proper death handling with signals
-## • Setup methods for different entity types (setup_player_health, setup_enemy_health, etc.)
+## • Scene-first configuration via @export properties
 ##
-## Usage: Drag Health.tscn into your scene, configure max_health, call appropriate setup method.
+## Usage: Drag Health.tscn into your scene, configure @export properties in inspector.
 ## Position HealthLabel child node to control where health display appears.
 
 extends Node2D
@@ -176,31 +176,6 @@ func _update_health_display():
 			health_label.add_theme_color_override("font_color", Color.YELLOW)
 		else:
 			health_label.add_theme_color_override("font_color", Color.RED)
-
-# ─────────── MODULAR SETUP METHODS ───────────
-func setup_player_health(max_hp: int = 40, show_display: bool = true):
-	"""Quick setup for player health"""
-	max_health = max_hp
-	current_health = max_hp
-	show_health_display = show_display
-	auto_connect_to_parent = true
-	_update_health_display()
-
-func setup_enemy_health(max_hp: int = 30, show_display: bool = false):
-	"""Quick setup for enemy health"""
-	max_health = max_hp
-	current_health = max_hp
-	show_health_display = show_display
-	auto_connect_to_parent = true
-	_update_health_display()
-
-func setup_plant_health(max_hp: int = 1, show_display: bool = false):
-	"""Quick setup for breakable plant health"""
-	max_health = max_hp
-	current_health = max_hp
-	show_health_display = show_display
-	auto_connect_to_parent = true
-	_update_health_display()
 
 func configure_from_editor():
 	"""Call this to refresh settings when changed in editor"""
