@@ -16,7 +16,6 @@ extends CharacterBody2D
 
 # ── COMBAT STATS (EASY TO ADJUST) ──
 @export var damage: int = 10                   # How much damage this enemy deals to the player
-@export var max_health: int = 30               # Starting health points for this enemy
 
 # ── AI BEHAVIOR SETTINGS ──
 @export var detection_range: float = 100.0     # How close the player needs to be for enemy to notice

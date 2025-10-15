@@ -19,7 +19,6 @@ extends CharacterBody2D
 @export var knockback_duration: float = 0.3     # How long knockback lasts (seconds)
 
 # ── COMBAT SETTINGS ──
-@export var attack_damage: int = 20              # How much damage player attacks deal
 @export var dash_speed: float = 300.0            # Speed during dash ability
 @export var dash_duration: float = 0.2           # How long dash lasts (seconds)
 

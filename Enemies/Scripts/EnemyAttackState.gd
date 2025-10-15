@@ -97,10 +97,7 @@ func _activate_attack_hitbox():
 	"""Activate the enemy's damage hitbox to hurt the player"""
 	# Use the new professional hitbox system
 	if enemy.hitbox:
-		# Set damage values if not already set
-		if enemy.hitbox.damage <= 0:
-			enemy.hitbox.damage = 15  # Default enemy damage
-			enemy.hitbox.knockback_force = 80.0  # Default enemy knockback
+		# Damage is already synced in Enemy._ready() - just activate
 		enemy.hitbox.activate()
 
 func _deactivate_attack_hitbox():
