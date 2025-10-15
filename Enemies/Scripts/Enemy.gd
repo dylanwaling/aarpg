@@ -13,6 +13,9 @@ extends CharacterBody2D
 # ─────────── CONSTANTS ───────────
 const SPRITE_FLIP_OFFSET: int = -1
 
+# ─────────── KNOCKBACK SETTINGS (CONFIGURE IN SCENE) ───────────
+@export var knockback_duration: float = 0.3
+
 # ─────────── STATE VARIABLES ───────────
 var direction: Vector2 = Vector2.ZERO
 var facing: Vector2 = Vector2.DOWN
@@ -151,10 +154,10 @@ func play_anim(state_name: String):
 # ─────────── KNOCKBACK SYSTEM ───────────
 func apply_knockback(knockback_force: Vector2):
 	velocity = knockback_force
-	knockback_timer = 0.3
+	knockback_timer = knockback_duration
 	
 	var tween = create_tween()
-	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, 0.3)
+	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, knockback_duration)
 
 func _apply_knockback_decay(current_knockback: Vector2):
 	velocity = current_knockback

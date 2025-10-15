@@ -28,7 +28,7 @@ var _wander_direction: Vector2 = Vector2.ZERO       # Current direction we're wa
 var _wander_distance_left: float = 0.0              # How much further to walk in current direction
 var _pause_timer: float = 0.0                       # Countdown timer for pausing between movements
 var _is_paused: bool = false                        # Whether we're currently paused
-var _wander_speed: float = 30.0                     # Actual speed while wandering
+var _wander_speed: float                             # Actual speed while wandering (calculated from enemy.move_speed)
 
 func enter(_from):
 	# Calculate wander speed based on enemy's normal speed

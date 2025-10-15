@@ -14,6 +14,7 @@ extends "res://Enemies/Scripts/EnemyState.gd"
 
 # ─────────── ATTACK SETTINGS (CONFIGURE IN SCENE INSPECTOR) ───────────
 @export var attack_duration: float = 1.5             # How long the attack lasts in seconds
+@export var wind_up_percentage: float = 0.4          # What fraction of attack is wind-up (0.4 = 40%)
 @export var stop_movement: bool = true               # If true, enemy can't move during attacks
 @export var lock_facing: bool = true                 # If true, enemy can't turn around mid-attack
 
@@ -58,7 +59,7 @@ func update(dt):
 	_time_left -= dt
 	
 	# Activate hitbox partway through the attack (after wind-up) - only once per attack
-	var wind_up_time = attack_duration * 0.4  # 40% of attack is wind-up
+	var wind_up_time = attack_duration * wind_up_percentage
 	if not _attack_activated and _time_left <= (attack_duration - wind_up_time):
 		_activate_attack_hitbox()
 		_attack_activated = true
