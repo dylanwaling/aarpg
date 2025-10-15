@@ -9,13 +9,7 @@ extends CharacterBody2D
 @export var move_speed: float = 60.0
 @export var detection_range: float = 100.0
 @export var attack_range: float = 32.0
-@export var wander_range: float = 50.0
-@export var chase_speed_multiplier: float = 1.5
-@export var knockback_resistance: float = 0.8
-@export var knockback_recovery_time: float = 0.4
 @export var attack_cooldown: float = 1.5
-@export var attack_windup_time: float = 0.5
-@export var post_attack_delay: float = 0.8
 # ─────────── CONSTANTS ───────────
 const SPRITE_FLIP_OFFSET: int = -1
 
@@ -159,8 +153,4 @@ func _apply_knockback_decay(current_knockback: Vector2):
 	velocity = current_knockback
 
 # ─────────── ATTACK HELPERS ───────────
-func can_attack() -> bool:
-	return attack_cooldown_timer <= 0.0
-
-func start_attack_cooldown(duration: float = 2.0):
-	attack_cooldown_timer = duration
+# Attack cooldown managed automatically in _process()
