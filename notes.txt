@@ -1,0 +1,7 @@
+for refining code
+#1 clean up code
+#2 check that the settings respect the scene settings
+#3 make sure funtions all lead and have purpose to somewhere and are being used corectly
+#4 make sure all connected documents are be used properly and efficeintly
+#5 check for duplicate methods
+#6 check over the code one last time and add comments explaing everything in the code so i can understand whta the code is doing in english and add headers
