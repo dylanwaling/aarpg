@@ -16,31 +16,34 @@
 class_name EnemyChaseState
 extends "res://Enemies/Scripts/EnemyState.gd"
 
+# ─────────── WHEN STARTING TO CHASE PLAYER ───────────
 func enter(_from):
-	# Start playing the chase animation (using walk animation for now)
+	# Play running/walking animation to show enemy is actively chasing
 	enemy.play_anim("walk")
 
+# ─────────── CHASE DECISIONS EVERY FRAME ───────────
 func update(_dt):
-	# Check if player is close enough to attack
+	# Check if we've gotten close enough to attack the player
 	if enemy.can_attack_player():
-		# Switch to attack state when in range
+		# Player is in attack range and cooldown is finished - attack!
 		enemy.change_state(enemy.attack_state)
 		return
 	
-	# Check if player has gotten too far away (give up chase)
+	# Check if player has escaped and is now too far away
 	var distance = enemy.distance_to_player()
-	if distance > enemy.detection_range * 1.5:  # Buffer zone to prevent flickering
-		# Player escaped! Go back to wandering
+	if distance > enemy.detection_range * 1.5:  # 1.5x gives buffer to prevent flickering
+		# Player got away - stop chasing and go back to wandering
 		enemy.change_state(enemy.wander_state)
 		return
 
+# ─────────── CHASE MOVEMENT PHYSICS ───────────
 func physics_update(_dt):
-	# Calculate direction to player and move toward them at full speed
+	# Point enemy toward player's current position
 	enemy.direction = enemy.direction_to_player()
 	
-	# Preserve knockback physics - don't override velocity during knockback
+	# Don't override knockback if enemy is being hit by player
 	if enemy.knockback_timer > 0:
-		return  # Allow knockback system to control velocity
+		return  # Let knockback physics control movement
 	
-	# Move towards player at full speed
+	# Move toward player at full speed (aggressive chase)
 	enemy.velocity = enemy.direction * enemy.move_speed

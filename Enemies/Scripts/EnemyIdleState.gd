@@ -15,41 +15,45 @@
 class_name EnemyIdleState
 extends "res://Enemies/Scripts/EnemyState.gd"
 
-# ─────────── IDLE BEHAVIOR SETTINGS ───────────
-@export var idle_duration: float = 1.5              # How long to stay idle before wandering
+# ─────────── IDLE TIMING YOU CAN TWEAK ───────────
+@export var idle_duration: float = 1.5              # How long to stand still before starting to wander
 
-# ─────────── INTERNAL TRACKING ───────────
-var _idle_timer: float = 0.0                        # Countdown timer for idle duration
+# ─────────── INTERNAL TIMER (DON'T MODIFY) ───────────
+var _idle_timer: float = 0.0                        # Counts down from idle_duration to zero
 
+# ─────────── WHEN ENTERING IDLE STATE ───────────
 func enter(_from):
-	# Stop the enemy from moving and play the standing animation
+	# Stop enemy movement completely and show idle animation
 	enemy.velocity = Vector2.ZERO
 	enemy.play_anim("idle")
 	
-	# Start the idle timer
+	# Reset the idle countdown timer
 	_idle_timer = idle_duration
 
+# ─────────── EVERY FRAME WHILE IDLE ───────────
 func update(dt):
-	# Only check for player if not in post-attack recovery
+	# Always watch for player unless in post-attack recovery period
 	if not enemy.post_attack_recovery and enemy.can_see_player():
-		# Player spotted! Switch to chase mode
+		# Player came within range! Start chasing immediately
 		enemy.change_state(enemy.chase_state)
 		return
 	
-	# Count down idle timer
+	# Count down time remaining in idle state
 	_idle_timer -= dt
 	if _idle_timer <= 0.0:
-		# Idle period finished - start wandering
+		# Idle time is up - start wandering around
 		enemy.change_state(enemy.wander_state)
 
+# ─────────── PHYSICS WHILE IDLE ───────────
 func physics_update(_dt):
-	# Preserve knockback physics - don't override velocity during knockback
+	# If enemy is being knocked back, let knockback control movement
 	if enemy.knockback_timer > 0.0:
 		return
 	
-	# Idle state: enemy doesn't move
+	# Otherwise, idle state means no movement at all
 	enemy.velocity = Vector2.ZERO
 
+# ─────────── WHEN LEAVING IDLE STATE ───────────
 func exit(_to):
-	# Clean up when leaving idle state
+	# Make sure enemy stops moving when transitioning to next state
 	enemy.velocity = Vector2.ZERO

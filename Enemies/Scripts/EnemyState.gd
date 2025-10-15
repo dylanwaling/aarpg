@@ -15,17 +15,18 @@
 class_name EnemyState
 extends Node
 
-# This gets filled in by the Enemy controller so each state can control the enemy
-var enemy
+# ─────────── ENEMY REFERENCE ───────────
+var enemy  # Reference to the Enemy that owns this state (set automatically)
 
+# ─────────── STATE INTERFACE FUNCTIONS ───────────
 # Called when this state becomes active (like switching from idle to chase)
 func enter(_from): pass
 
-# Called when leaving this state to go to another one
+# Called when leaving this state to go to another one  
 func exit(_to): pass
 
-# Called every frame while this state is active (for AI logic and animations)
+# Called every frame while this state is active (for AI decisions and animations)
 func update(_delta): pass
 
-# Called during physics updates (for movement and collision)
+# Called during physics updates (for movement and collision detection)
 func physics_update(_delta): pass

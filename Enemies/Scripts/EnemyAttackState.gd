@@ -12,104 +12,108 @@
 class_name EnemyAttackState
 extends "res://Enemies/Scripts/EnemyState.gd"
 
-# ─────────── ATTACK SETTINGS (CONFIGURE IN SCENE INSPECTOR) ───────────
-@export var attack_duration: float = 1.5             # How long the attack lasts in seconds
-@export var wind_up_percentage: float = 0.4          # What fraction of attack is wind-up (0.4 = 40%)
-@export var stop_movement: bool = true               # If true, enemy can't move during attacks
-@export var lock_facing: bool = true                 # If true, enemy can't turn around mid-attack
+# ─────────── ATTACK TIMING YOU CAN TWEAK ───────────
+@export var attack_duration: float = 1.5             # Total time for complete attack animation
+@export var wind_up_percentage: float = 0.4          # How much of attack is wind-up before damage (40%)
+@export var stop_movement: bool = true               # Whether enemy stops moving during attack
+@export var lock_facing: bool = true                 # Whether enemy can't turn while attacking
 
-# ─────────── INTERNAL TRACKING VARIABLES ───────────
-var _time_left: float = 0.0                # Counts down from attack_duration to 0
-var _locked_facing: Vector2 = Vector2.DOWN  # Remembers which way enemy was facing when attack started
-var _attack_activated: bool = false         # Tracks if we've activated the damage hitbox
-var _can_attack_again: bool = true          # Cooldown flag to prevent rapid attacks
+# ─────────── INTERNAL ATTACK STATE (DON'T MODIFY) ───────────
+var _time_left: float = 0.0                # Countdown timer for attack duration
+var _locked_facing: Vector2 = Vector2.DOWN  # Direction enemy was facing when attack started
+var _attack_activated: bool = false         # Whether damage hitbox has been activated yet
+var _can_attack_again: bool = true          # Whether enough time has passed since last attack
 
+# ─────────── STARTING AN ATTACK ───────────
 func enter(_from):
-	# Check if we're still in cooldown from previous attack
+	# Check if attack cooldown is still active from previous attack
 	if not _can_attack_again:
-		# Still in cooldown, can't attack yet
+		# Can't attack yet, go back to idle and wait
 		enemy.change_state(enemy.idle_state)
 		return
 	
-	# Set cooldown flag and start attack
+	# Start attack cooldown period to prevent spam attacks
 	_can_attack_again = false
-	# Set the main attack cooldown timer to prevent immediate re-attacking
+	# Set enemy's main cooldown timer (used by can_attack_player())
 	enemy.attack_cooldown_timer = enemy.attack_cooldown
 	
-	# Remember which direction the enemy was facing when the attack started
+	# Lock enemy facing direction so they don't spin during attack
 	if lock_facing:
 		_locked_facing = enemy.facing
 
-	# Stop the enemy from moving during attack
+	# Stop enemy movement so they commit to the attack
 	if stop_movement:
 		enemy.velocity = Vector2.ZERO
 
-	# Start the enemy's attack animation (attack_up, attack_down, or attack_side)
+	# Play attack animation that matches enemy's facing direction
 	enemy.play_anim("attack")
 	
-	# Don't activate hitbox immediately - wait for wind-up
-	# _activate_attack_hitbox() will be called later in update()
+	# Don't activate damage hitbox yet - wait for wind-up period
+	# Hitbox activation happens later in update() after wind-up period
 
-	# Start counting down the attack timer
+	# Initialize attack timing
 	_time_left = attack_duration
 	_attack_activated = false
 
+# ─────────── ATTACK TIMING EVERY FRAME ───────────
 func update(dt):
-	# Count down the attack timer
+	# Count down remaining attack time
 	_time_left -= dt
 	
-	# Activate hitbox partway through the attack (after wind-up) - only once per attack
+	# Activate damage hitbox after wind-up period (only once per attack)
 	var wind_up_time = attack_duration * wind_up_percentage
 	if not _attack_activated and _time_left <= (attack_duration - wind_up_time):
-		_activate_attack_hitbox()
+		_activate_attack_hitbox()  # Turn on damage dealing
 		_attack_activated = true
 	
-	# When attack is finished, decide what to do next
+	# When attack animation finishes, transition to recovery
 	if _time_left <= 0.0:
-		# Enter special post-attack idle that ignores player for 2 seconds
+		# Go to idle state but ignore player briefly (recovery period)
 		enemy.change_state(enemy.idle_state)
-		# Set a flag to make idle ignore player detection
+		# Make idle state ignore player detection temporarily
 		enemy.post_attack_recovery = true
-		# Clear the flag after attack_cooldown seconds
+		# After cooldown, allow attacking again and resume normal behavior
 		get_tree().create_timer(enemy.attack_cooldown).timeout.connect(_enable_next_attack)
 		return
 
+# ─────────── COOLDOWN RECOVERY ───────────
 func _enable_next_attack():
-	"""Called after cooldown timer expires to allow attacking again"""
+	# Attack cooldown has finished - enemy can attack again
 	_can_attack_again = true
+	# End the post-attack recovery period
 	enemy.post_attack_recovery = false
 	
-	# Resume appropriate behavior based on player proximity
+	# Decide what to do next based on where player is now
 	if enemy.can_see_player():
-		enemy.change_state(enemy.chase_state)  # Continue chasing if player nearby
+		enemy.change_state(enemy.chase_state)  # Keep chasing if player still nearby
 	else:
-		enemy.change_state(enemy.wander_state)  # Return to wandering if player left
+		enemy.change_state(enemy.wander_state)  # Go back to wandering if player left
 
+# ─────────── PHYSICS DURING ATTACK ───────────
 func physics_update(_dt):
-	# Preserve knockback physics - don't override velocity during knockback
+	# Don't interfere with knockback physics if enemy is being hit
 	if enemy.knockback_timer > 0.0:
 		return
 	
-	# Attack state doesn't move the enemy - they stay in place during attack
+	# During attack, enemy stays completely still (committed to attack)
 	enemy.velocity = Vector2.ZERO
 
+# ─────────── DAMAGE HITBOX CONTROL ───────────
 func _activate_attack_hitbox():
-	"""Activate the enemy's damage hitbox to hurt the player"""
-	# Use the new professional hitbox system
+	# Turn on enemy's hitbox so it can damage the player
 	if enemy.hitbox:
-		# Damage is already synced in Enemy._ready() - just activate
-		enemy.hitbox.activate()
+		enemy.hitbox.activate()  # Hitbox handles damage amount automatically
 
 func _deactivate_attack_hitbox():
-	"""Disable the enemy's damage hitbox"""
-	# Use the new professional hitbox system
+	# Turn off enemy's hitbox so it stops damaging player
 	if enemy.hitbox:
 		enemy.hitbox.deactivate()
 
+# ─────────── WHEN LEAVING ATTACK STATE ───────────
 func exit(_to):
-	# Make sure hitbox is disabled when leaving attack state
+	# Always turn off damage hitbox when attack ends
 	_deactivate_attack_hitbox()
 	
-	# Always go to idle after attack to add natural spacing
+	# Force transition to idle for natural recovery period
 	if _to != enemy.idle_state:
 		enemy.change_state(enemy.idle_state)
