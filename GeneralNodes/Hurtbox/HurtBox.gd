@@ -1,92 +1,111 @@
-## PROFESSIONAL HURTBOX SYSTEM - Receives Damage via Clean Interface
+## HURTBOX COMPONENT - Receives and Processes Incoming Damage
 ##
-## Core Responsibilities:
-## • Receives damage through take_hit(damage, knockback, source_pos) method calls
-## • Automatically finds and forwards damage to Health component  
-## • Applies knockback to parent entity (Player/Enemy/Plant)
-## • Provides damage immunity period to prevent rapid-fire damage
-## • Collision layers configured in scene editor, not hardcoded in script
+## This component acts as a "damage receiver" for any entity that can take damage.
+## When hit by attacks, it finds the Health component and forwards the damage.
 ##
-## Usage: Just add to scene and configure collision layers in inspector. Everything else is automatic.
+## Key Features:
+## - Receives damage from Hitbox attacks via take_hit() interface
+## - Automatically finds and communicates with Health component
+## - Applies knockback physics to parent entity (Player/Enemy/etc.)
+## - Damage immunity system prevents rapid-fire damage exploitation
+## - Collision detection configured in scene inspector, not hardcoded
+##
+## Usage: Add HurtBox.tscn to any entity, configure collision layers in inspector.
+## Make sure entity has Health component and optionally apply_knockback() method.
 
-extends Area2D
 class_name HurtBox
+extends Area2D
 
-# ─────────── DAMAGE IMMUNITY SETTINGS ───────────
-@export var damage_immunity_duration: float = 0.5  # Seconds of immunity after taking damage
-@export var knockback_multiplier: float = 1.0       # Multiplier for knockback force received
+# ─────────── DAMAGE PROTECTION SETTINGS YOU CAN TWEAK ───────────
+@export var damage_immunity_duration: float = 0.5  # Immunity period after taking damage (prevents spam)
+@export var knockback_multiplier: float = 1.0       # Modify incoming knockback force (1.0 = normal, 0.5 = half, 2.0 = double)
 
-# ─────────── INTERNAL REFERENCES ───────────
-var _health_component: Node = null
-var _damage_immunity_timer: float = 0.0
+# ─────────── INTERNAL COMPONENT STATE (DON'T MODIFY) ───────────
+var _health_component: Node = null                 # Reference to the Health component we forward damage to
+var _damage_immunity_timer: float = 0.0            # Countdown timer for damage immunity period
 
+# ─────────── HURTBOX INITIALIZATION ───────────
 func _ready():
-	# Find the Health component
+	# Locate and connect to the Health component automatically
 	_find_health_component()
 
 func _process(delta):
-	# Count down immunity timer
+	# ─────────── DAMAGE IMMUNITY COUNTDOWN ───────────
+	# Count down the immunity timer (prevents rapid damage from same source)
 	if _damage_immunity_timer > 0.0:
 		_damage_immunity_timer -= delta
 
+# ─────────── MAIN DAMAGE INTERFACE ───────────
 func take_hit(damage_amount: int, knockback_force: float, source_position: Vector2):
-	"""Main interface - called by hitboxes to deal damage"""
+	"""Process incoming damage from Hitbox attacks - this is the main entry point"""
+	# ─────────── VALIDATION CHECKS ───────────
+	# Can't take damage without a health component
 	if not _health_component:
+		push_warning("HurtBox: No health component found - cannot process damage")
 		return
 		
-	# Check damage immunity (prevents rapid damage from same source)
+	# Check if we're in immunity period (prevents rapid-fire damage exploitation)
 	if _damage_immunity_timer > 0.0:
-		return
+		return  # Still immune from previous damage
 		
-	# Start immunity period
-		# Apply immunity period (prevents rapid-fire damage)
+	# ─────────── DAMAGE PROCESSING ───────────
+	# Start immunity period to prevent damage spam
 	_damage_immunity_timer = damage_immunity_duration
 	
-	# Apply damage
+	# Forward damage to the Health component (this will trigger signals, death, etc.)
 	_health_component.take_damage(damage_amount)
 	
-	# Apply knockback to parent (skip for plants and environment objects)
+	# ─────────── KNOCKBACK PHYSICS ───────────
+	# Apply knockback to parent entity (if it supports knockback and isn't environment)
 	var parent = get_parent()
 	if parent and parent.has_method("apply_knockback") and knockback_force > 0 and not parent.is_in_group("environment"):
-		# Direction FROM source TO target (pushes away from attacker)
+		# Calculate knockback direction: FROM attacker TO victim (pushes away)
 		var direction = (global_position - source_position).normalized()
+		# Apply multiplier for different entity types (heavy enemies = less knockback)
 		var final_knockback_force = knockback_force * knockback_multiplier
 		var knockback_vector = direction * final_knockback_force
+		# Send knockback to parent (Player, Enemy, etc.)
 		parent.apply_knockback(knockback_vector)
 
 func _find_health_component():
-	"""Find the Health component on this node or parent"""
-	# Check children of this hurtbox
+	"""Automatically locate the Health component this HurtBox should work with"""
+	# ─────────── SEARCH STRATEGY 1: CHECK HURTBOX CHILDREN ───────────
+	# Look for Health component as child of this HurtBox
 	for child in get_children():
 		if child.has_method("take_damage") and child.has_method("get_health"):
 			_health_component = child
 			return
 	
-	# Check siblings (other children of parent)
+	# ─────────── SEARCH STRATEGY 2: CHECK SIBLING NODES ───────────
+	# Look for Health component as sibling (other children of same parent)
 	var parent = get_parent()
 	if parent:
 		for child in parent.get_children():
 			if child.has_method("take_damage") and child.has_method("get_health"):
 				_health_component = child
 				return
+	
+	# ─────────── ERROR HANDLING ───────────
+	# No Health component found - this HurtBox won't be able to process damage
+	push_error("HurtBox: No Health component found! Entity won't be able to take damage.")
 
 
 
-# ─────────── UTILITY METHODS ───────────
+# ─────────── UTILITY METHODS FOR OTHER SYSTEMS ───────────
 func get_health_component() -> Node:
-	"""Get reference to the health component"""
+	"""Get reference to the connected Health component"""
 	return _health_component
 
 func is_alive() -> bool:
-	"""Check if the entity is still alive"""
+	"""Check if the entity is still alive (has health > 0)"""
 	if _health_component and _health_component.has_method("is_alive"):
 		return _health_component.is_alive()
-	return true
+	return true  # Assume alive if no health component
 
 func get_current_health() -> int:
-	"""Get current health from the health component"""
+	"""Get current health points from the Health component"""
 	if _health_component and _health_component.has_method("get_health"):
 		return _health_component.get_health()
-	return 0
+	return 0  # Return 0 if no health component
 
-# End of HurtBox system - all configuration handled via scene inspector
+# HurtBox system complete - all configuration via scene inspector, no hardcoded values
