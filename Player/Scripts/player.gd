@@ -43,26 +43,30 @@ var current           = null                    # Currently active state (idle/w
 
 # ─────────── SETUP THAT RUNS WHEN THE GAME STARTS ───────────
 func _ready():
-	# Tell each state "hey, you belong to this player" so they can control it
+	# ═══════════ PLAYER INITIALIZATION SYSTEM ═══════════
+	# Set up all the player states and connect them to this player controller
 	for s in $States.get_children():
-		s.player = self
+		s.player = self  # Each state (idle, walk, attack, dash) needs to know which player it controls
 
-	# Make sure attack effects are hidden when the game starts (they show during attacks)
+	# Start with visual effects hidden (they'll appear during attacks)
 	attack_fx_sprite.visible = false
 
-	# Add player to group so enemies can find us
+	# Register with game systems so enemies can find and target the player
 	add_to_group("player")
 
-	# Validate Health component is properly connected
+	# ═══════════ HEALTH SYSTEM CONNECTION VALIDATION ═══════════
+	# Make sure the health component is properly wired up for damage/death
 	if health_component:
-		# Health component should auto-connect, but verify it worked
+		# The Health component should auto-connect its signals, but let's double-check
+		# If auto-connection failed, we'll connect manually to prevent silent failures
 		if not health_component.died.is_connected(_on_health_died):
-			push_warning("Player: Health component didn't auto-connect. Connecting manually.")
+			push_warning("Player: Health component didn't auto-connect death signal. Connecting manually.")
 			health_component.died.connect(_on_health_died)
 		if not health_component.health_changed.is_connected(_on_health_changed):
+			push_warning("Player: Health component didn't auto-connect health change signal. Connecting manually.")
 			health_component.health_changed.connect(_on_health_changed)
 	else:
-		push_error("Player: Health component not found! Player won't be able to take damage.")
+		push_error("Player: Health component not found! Player won't be able to take damage or die.")
 
 	# Validate HurtBox component exists and is properly configured  
 	if hurtbox:
@@ -112,15 +116,23 @@ func change_state(next):
 
 # ─────────── INPUT & MOVEMENT HELPERS ───────────
 func read_direction():
-	# Look at WASD or arrow keys and figure out which direction the player wants to go
-	# This creates a Vector2 where x is left/right (-1 to 1) and y is up/down (-1 to 1)
+	# ═══════════ INPUT PROCESSING SYSTEM ═══════════
+	# Convert keyboard input (WASD or arrow keys) into a movement direction vector
+	# 
+	# How it works:
+	# - get_action_strength() returns 0.0 to 1.0 based on how hard the key is pressed
+	# - We subtract opposite directions: right(1.0) - left(0.0) = move right(1.0)
+	# - This creates a Vector2 where x = horizontal (-1 to 1) and y = vertical (-1 to 1)
 	direction = Vector2(
-		Input.get_action_strength("right") - Input.get_action_strength("left"),
-		Input.get_action_strength("down")  - Input.get_action_strength("up")
+		Input.get_action_strength("right") - Input.get_action_strength("left"),  # Horizontal movement
+		Input.get_action_strength("down")  - Input.get_action_strength("up")    # Vertical movement
 	)
-	# Make sure diagonal movement isn't faster by normalizing the vector
+	
+	# ═══════════ DIAGONAL MOVEMENT FIX ═══════════
+	# Problem: Moving diagonally would be faster (1,1) = length 1.41 vs straight (1,0) = length 1.0
+	# Solution: Normalize the vector so all directions have the same speed
 	if direction != Vector2.ZERO:
-		direction = direction.normalized()
+		direction = direction.normalized()  # Convert to unit vector (length = 1.0)
 
 func update_facing():
 	# If the player isn't trying to move, keep facing the same direction as before
@@ -145,16 +157,26 @@ func update_facing():
 
 # ─────────── ANIMATION HELPERS ───────────
 func play_anim(state_name: String):
-	# Builds animation name like "walk_side" or "idle_down"
-	var dir_name := "side"
+	# ═══════════ ANIMATION SYSTEM ═══════════
+	# Build the complete animation name by combining state + direction
+	# Examples: "walk_side", "idle_down", "attack_up"
+	# 
+	# Direction mapping logic:
+	# - UP/DOWN facing = use specific up/down animations
+	# - LEFT/RIGHT facing = both use "side" animation (we flip the sprite instead)
+	var dir_name := "side"  # Default for left/right movement
 	if facing == Vector2.UP:
-		dir_name = "up"
+		dir_name = "up"     # Upward animations (walking up, attacking up, etc.)
 	elif facing == Vector2.DOWN:
-		dir_name = "down"
+		dir_name = "down"   # Downward animations (walking down, attacking down, etc.)
+	# Note: LEFT and RIGHT both use "side" - we handle left/right by flipping the sprite
 
+	# Combine state and direction: "walk" + "_" + "side" = "walk_side"
 	var anim_name := "%s_%s" % [state_name, dir_name]
 
-	# Only change animation if it's different (avoids restarts)
+	# ═══════════ PERFORMANCE OPTIMIZATION ═══════════
+	# Only switch animations if we're actually changing to something different
+	# This prevents animation restarts when the same animation is already playing
 	if !anim.is_playing() or anim.current_animation != anim_name:
 		anim.play(anim_name)
 
@@ -198,14 +220,18 @@ func _on_health_changed(_new_health: int, _max_health: int):
 	pass
 
 func apply_knockback(knockback_force: Vector2):
-	"""Apply knockback to the player with proper decay (matches enemy implementation)"""
-	# Set the knockback velocity immediately
+	"""Apply knockback physics when player gets hit by enemies or traps"""
+	# Immediately start moving the player in the knockback direction
+	# This force vector comes from whatever hit the player (enemy attack, explosion, etc.)
 	velocity = knockback_force
 	
-	# Create a timer to gradually reduce the knockback using scene-configured duration
+	# Create a smooth animation that gradually reduces the knockback over time
+	# This prevents the player from instantly stopping - they slide to a halt naturally
 	var tween = create_tween()
 	tween.tween_method(_apply_knockback_decay, knockback_force, Vector2.ZERO, knockback_duration)
 
 func _apply_knockback_decay(current_knockback: Vector2):
-	"""Gradually reduce knockback velocity (matches enemy implementation)"""
+	"""This function gets called many times per second to slowly reduce knockback speed"""
+	# Each frame, the knockback gets weaker until it reaches zero
+	# This creates a smooth "sliding" effect rather than instant stop
 	velocity = current_knockback

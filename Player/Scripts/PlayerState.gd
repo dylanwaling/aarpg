@@ -36,11 +36,18 @@ func physics_update(_delta): pass
 
 # ─────────── SHARED UTILITY FUNCTIONS ───────────
 func handle_common_actions(event):
-	"""Handle attack and dash inputs that work from any state"""
+	"""Handle attack and dash inputs that work from any state - prevents code duplication"""
+	# ═══════════ ATTACK INPUT ═══════════
+	# Player pressed attack button - switch to attack state immediately
 	if event.is_action_pressed("attack"):
 		player.change_state(player.attack_state)
-		return true
+		return true  # Input was handled, don't process other inputs
+	
+	# ═══════════ DASH INPUT (WITH COOLDOWN CHECK) ═══════════
+	# Player pressed dash button - but only if dash is available (not on cooldown)
 	elif event.is_action_pressed("dash") and player.dash_state.can_dash():
 		player.change_state(player.dash_state)
-		return true
+		return true  # Input was handled, don't process other inputs
+	
+	# No common actions were triggered - let the specific state handle the input
 	return false

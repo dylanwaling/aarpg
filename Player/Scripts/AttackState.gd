@@ -85,44 +85,53 @@ func _show_and_play_attack_effects():
 		_play_attack_sound()
 
 func _play_attack_sound():
-	# Try to find dedicated AttackAudio node first
+	# ─────────── FLEXIBLE AUDIO SYSTEM ───────────
+	# First, try to find a dedicated AttackAudio node in the player scene
 	var audio_player = player.get_node_or_null("AttackAudio")
 	if audio_player and audio_player is AudioStreamPlayer2D:
+		# Great! Found a dedicated audio node, just play it
 		audio_player.play()
 	else:
-		# Fallback: Create temporary audio player for attack sound
+		# FALLBACK: No dedicated audio node found, create a temporary one
+		# This ensures attacks always have sound even if scene setup is incomplete
 		var temp_audio = AudioStreamPlayer2D.new()
+		# Load the sword sound file (cached to avoid repeated loading)
 		if not _attack_sound:
 			_attack_sound = preload("res://Player/Audio/SwordSwoosh.wav")
 		temp_audio.stream = _attack_sound
-		player.add_child(temp_audio)
-		temp_audio.play()
-		# Clean up after sound finishes
+		player.add_child(temp_audio)  # Add to scene so it can play
+		temp_audio.play()  # Play the sound
+		# CLEANUP: Remove temporary audio node when sound finishes playing
 		temp_audio.finished.connect(func(): temp_audio.queue_free())
 
 func _update_attack_effects():
-	# Get reference to the AttackFX parent node (this is what we'll transform)
+	# ─────────── VISUAL EFFECTS DIRECTION SYSTEM ───────────
+	# Get the container that holds all the sword swoosh/slash graphics
 	var attack_fx_node = player.get_node("Sprite2D/AttackFX")
 	
-	# Professional method: Use scale transformation for flipping
-	# This works WITH the animation system, not against it
+	# Make the attack effects face the same direction as the player
+	# We use scale flipping which works perfectly with the animation system
 	if _locked_facing == Vector2.LEFT or _locked_facing == Vector2.RIGHT:
-		if player.sprite.flip_h:  # Facing left
-			attack_fx_node.scale.x = -1  # Flip horizontally around parent center
-		else:  # Facing right
-			attack_fx_node.scale.x = 1   # Normal scale
-	else:  # Up/down attacks
-		attack_fx_node.scale.x = 1       # Always normal scale for up/down
+		# For left/right attacks, check if player sprite is flipped
+		if player.sprite.flip_h:  # Player is facing left
+			attack_fx_node.scale.x = -1  # Mirror the sword effects to match
+		else:  # Player is facing right
+			attack_fx_node.scale.x = 1   # Keep effects normal
+	else:  # Up/down attacks don't need horizontal flipping
+		attack_fx_node.scale.x = 1       # Always keep up/down effects normal
 
 # ─────────── ATTACK LOGIC EVERY FRAME ───────────
 func update(delta):
-	# Handle movement during attack (if not completely stopped)
+	# ─────────── ATTACK MOVEMENT SYSTEM ───────────
+	# Handle movement during attack (if movement isn't completely disabled)
 	if not stop_movement:
-		# Allow movement during attack with dodge boost for retreat
+		# Check if player is trying to move while attacking
 		if player.direction != Vector2.ZERO:
+			# Start with slow attack movement speed
 			var movement_velocity = player.direction * attack_movement_speed
 			
-			# Attack-dodge: if moving opposite to attack direction, give speed boost
+			# SPECIAL FEATURE: Attack-dodge system for tactical combat
+			# If player moves OPPOSITE to attack direction, they get a speed boost for retreating
 			if _is_retreat_movement(player.direction, _locked_facing):
 				# Retreat movement is much faster for tactical dodging
 				movement_velocity = player.direction * (player.move_speed * 1.5)
@@ -130,36 +139,40 @@ func update(delta):
 				# Update sprite and redirect attack when dodge starts
 				var new_dodge_direction = Vector2.ZERO
 				
-				# Handle horizontal dodging (left/right)
-				if player.direction.x < 0:  # Moving left
-					player.facing = Vector2.LEFT
-					player.update_facing()  # Use centralized sprite management
-					player.play_anim("attack")  # Update animation immediately
-					_update_attack_effects()  # Update sword animation for new direction
-					new_dodge_direction = Vector2.LEFT
-				elif player.direction.x > 0:  # Moving right
-					player.facing = Vector2.RIGHT
-					player.update_facing()  # Use centralized sprite management
-					player.play_anim("attack")  # Update animation immediately
-					_update_attack_effects()  # Update sword animation for new direction
-					new_dodge_direction = Vector2.RIGHT
-				# Handle vertical dodging (up/down) - switch animations mid-swing
-				elif player.direction.y < 0:  # Moving up
+				# ═══════════ HORIZONTAL DODGE SYSTEM ═══════════
+				# When player moves left/right during attack, they can redirect mid-swing
+				if player.direction.x < 0:  # Player pressing LEFT during attack
+					player.facing = Vector2.LEFT  # Change character facing direction
+					player.update_facing()  # Update sprite flipping and positioning
+					player.play_anim("attack")  # Switch to left-facing attack animation
+					_update_attack_effects()  # Make sword effects face left too
+					new_dodge_direction = Vector2.LEFT  # Remember new direction for hitbox
+				elif player.direction.x > 0:  # Player pressing RIGHT during attack
+					player.facing = Vector2.RIGHT  # Change character facing direction
+					player.update_facing()  # Update sprite flipping and positioning
+					player.play_anim("attack")  # Switch to right-facing attack animation
+					_update_attack_effects()  # Make sword effects face right too
+					new_dodge_direction = Vector2.RIGHT  # Remember new direction for hitbox
+				# ═══════════ VERTICAL DODGE SYSTEM (SEAMLESS ANIMATION SWITCHING) ═══════════
+				# For up/down movement, we need to switch between different attack animations
+				# The trick is to continue the animation from the SAME POINT to avoid visual jumps
+				elif player.direction.y < 0:  # Player pressing UP during attack
 					player.facing = Vector2.UP
-					player.update_facing()  # Use centralized sprite management
-					# Seamlessly switch to attack_up animation at current progress
-					var current_position = player.anim.current_animation_position
-					player.anim.play("attack_up", -1, 1.0, false)
-					player.anim.advance(current_position)  # Jump directly to position without reset
+					player.update_facing()  # Update sprite positioning
 					
-					# Seamlessly switch attack effects animation to match new direction
+					# SEAMLESS SWITCH: Remember where we are in the current animation
+					var current_position = player.anim.current_animation_position
+					player.anim.play("attack_up", -1, 1.0, false)  # Start new animation
+					player.anim.advance(current_position)  # Jump to same point - no restart!
+					
+					# SYNC VISUAL EFFECTS: Make sword animation match character animation timing
 					var attack_fx_anim = player.get_node("Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer")
 					var fx_current_position = attack_fx_anim.current_animation_position
-					attack_fx_anim.play("attack_up", -1, 1.0, false)
-					attack_fx_anim.advance(fx_current_position)  # Jump directly to position without reset
+					attack_fx_anim.play("attack_up", -1, 1.0, false)  # Switch sword effect
+					attack_fx_anim.advance(fx_current_position)  # Keep same timing - perfect sync!
 					
-					_update_attack_effects()  # Update sword positioning for new direction
-					new_dodge_direction = Vector2.UP
+					_update_attack_effects()  # Update sword visual positioning
+					new_dodge_direction = Vector2.UP  # Tell hitbox system about new direction
 				elif player.direction.y > 0:  # Moving down  
 					player.facing = Vector2.DOWN
 					player.update_facing()  # Use centralized sprite management
@@ -264,12 +277,18 @@ func _create_damage_hitbox():
 	# Position the hitbox based on attack direction
 	_position_hitbox_for_direction()
 	
-	# Set up collision layers for player attacks
+	# ─────────── COLLISION SYSTEM SETUP ───────────
+	# Set up what this attack hitbox can hit and what layer it belongs to
+	# 
+	# COLLISION LAYERS (what AM I?):
 	# Layer 3 = Player Attacks: 2^(3-1) = 2^2 = 4
+	# 
+	# COLLISION MASKS (what can I HIT?):
 	# Mask 12 = Enemy Hurtboxes: 2^(12-1) = 2^11 = 2048  
 	# Mask 6 = Environment Objects: 2^(6-1) = 2^5 = 32
-	_current_hitbox.collision_layer = 4  # Layer 3 
-	_current_hitbox.collision_mask = 2048 + 32  # Detects Layer 12 (enemies) + Layer 6 (plants)
+	# 
+	_current_hitbox.collision_layer = 4  # "I am a player attack" 
+	_current_hitbox.collision_mask = 2048 + 32  # "I can hit enemies and destructible objects"
 	
 	# Hitbox uses its own @export damage and knockback_force values from scene
 	
@@ -278,26 +297,30 @@ func _create_damage_hitbox():
 	_current_hitbox.activate()
 
 func _position_hitbox_for_direction():
-	"""Position the hitbox in front of the player based on attack direction"""
+	"""Position the damage area in front of the player based on which way they're attacking"""
 	if not _current_hitbox:
 		return
 		
+	# ─────────── HITBOX POSITIONING MATH ───────────
 	var hitbox_offset = Vector2.ZERO
-	var hitbox_half_distance = attack_range * 0.5  # Position hitbox so it extends from player to attack_range
+	# Position hitbox so its CENTER is halfway between player and max attack range
+	# This means the hitbox extends from the player out to the full attack distance
+	var hitbox_half_distance = attack_range * 0.5
 	
-	# Position hitbox closer to player - the far edge reaches attack_range distance
+	# Calculate offset direction based on which way the player is attacking
 	match _locked_facing:
-		Vector2.UP:
+		Vector2.UP:     # Attacking upward
 			hitbox_offset = Vector2(0, -hitbox_half_distance)
-		Vector2.DOWN:
+		Vector2.DOWN:   # Attacking downward  
 			hitbox_offset = Vector2(0, hitbox_half_distance)
-		Vector2.LEFT:
+		Vector2.LEFT:   # Attacking to the left
 			hitbox_offset = Vector2(-hitbox_half_distance, 0)
-		Vector2.RIGHT:
+		Vector2.RIGHT:  # Attacking to the right
 			hitbox_offset = Vector2(hitbox_half_distance, 0)
 	
-	# Use sprite center position instead of collision shape center (feet)
-	# The sprite is positioned at (0, -20) relative to the player origin
+	# ─────────── IMPORTANT: USE SPRITE CENTER, NOT FEET ───────────
+	# The player's collision shape is at their feet, but attacks come from their body/weapon
+	# So we position hitboxes relative to the sprite center instead of the collision shape
 	var sprite_center_position = player.global_position + player.sprite.position
 	_current_hitbox.global_position = sprite_center_position + hitbox_offset
 
@@ -315,19 +338,21 @@ func get_attack_range() -> float:
 
 # ─────────── ATTACK-DODGE HELPER ───────────
 func _is_retreat_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
-	"""Check if player is moving opposite to attack direction (attack-dodge retreat)"""
-	# For side attacks, check if moving in opposite horizontal direction
+	"""Detects if player is doing a tactical retreat dodge (moving away from attack direction)"""
+	# ─────────── RETREAT DETECTION LOGIC ───────────
+	# Check horizontal retreat moves (left/right attacks)
 	if attack_dir == Vector2.LEFT and movement_dir.x > 0.3:
-		return true  # Attacking left, moving right (retreat dodge)
+		return true  # Attacking left but moving right = backing away (retreat dodge)
 	if attack_dir == Vector2.RIGHT and movement_dir.x < -0.3:
-		return true  # Attacking right, moving left (retreat dodge)
+		return true  # Attacking right but moving left = backing away (retreat dodge)
 	
-	# For vertical attacks, check if moving in opposite vertical direction  
+	# Check vertical retreat moves (up/down attacks)
 	if attack_dir == Vector2.UP and movement_dir.y > 0.3:
-		return true  # Attacking up, moving down (retreat dodge)
+		return true  # Attacking up but moving down = backing away (retreat dodge)
 	if attack_dir == Vector2.DOWN and movement_dir.y < -0.3:
-		return true  # Attacking down, moving up (retreat dodge)
+		return true  # Attacking down but moving up = backing away (retreat dodge)
 	
+	# Not a retreat movement - could be advancing or side-stepping
 	return false
 
 func _redirect_hitbox_to_direction(new_direction: Vector2):

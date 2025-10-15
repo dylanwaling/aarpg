@@ -23,15 +23,20 @@ func enter(_from):
 
 # ─────────── MOVEMENT LOGIC EVERY FRAME ───────────
 func update(_dt):
-	# Return to idle if movement input stops
+	# ═══════════ AUTOMATIC STATE TRANSITIONS ═══════════
+	# Check if player stopped giving movement input - if so, switch to idle
 	if player.direction == Vector2.ZERO:
 		player.change_state(player.idle_state)
-		return
+		return  # Exit early - don't do movement logic if we're switching states
 
-	# Apply movement velocity based on input direction
+	# ═══════════ MOVEMENT PHYSICS ═══════════
+	# Convert input direction into actual movement velocity
+	# direction is a unit vector (length 1.0), so multiply by speed to get proper velocity
 	player.velocity = player.direction * player.move_speed
 
-	# Update animation to match current facing direction
+	# ═══════════ ANIMATION SYNC ═══════════
+	# Keep the walking animation updated to match which direction we're facing
+	# This handles cases where the player changes direction while walking
 	player.play_anim("walk")
 
 # ─────────── INPUT HANDLING WHILE WALKING ───────────

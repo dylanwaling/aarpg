@@ -77,16 +77,18 @@ func physics_update(_delta):
 
 # ─────────── COOLDOWN MANAGEMENT ───────────
 func _start_cooldown():
-	# Create cooldown timer if it doesn't exist (reusable approach)
+	# ─────────── EFFICIENT TIMER MANAGEMENT ───────────
+	# Create a reusable timer (only once) instead of making new timers each dash
+	# This prevents memory waste from creating hundreds of timer objects
 	if not _cooldown_timer:
-		_cooldown_timer = Timer.new()
-		add_child(_cooldown_timer)
-		_cooldown_timer.one_shot = true
-		_cooldown_timer.timeout.connect(_reset_dash_availability)
+		_cooldown_timer = Timer.new()  # Create the timer object
+		add_child(_cooldown_timer)      # Add it to the scene tree
+		_cooldown_timer.one_shot = true  # Timer only fires once, doesn't repeat
+		_cooldown_timer.timeout.connect(_reset_dash_availability)  # When timer ends, allow dashing again
 	
-	# Start cooldown countdown
-	_cooldown_timer.wait_time = dash_cooldown
-	_cooldown_timer.start()
+	# Configure and start the cooldown countdown
+	_cooldown_timer.wait_time = dash_cooldown  # How long to wait (set in inspector)
+	_cooldown_timer.start()  # Begin counting down
 
 func _reset_dash_availability():
 	# Dash cooldown finished - allow dashing again
