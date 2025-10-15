@@ -15,8 +15,8 @@ extends CharacterBody2D
 @export var move_speed: float = 100.0           # Base walking speed in pixels per second
 
 # ─────────── KNOCKBACK PHYSICS YOU CAN TWEAK ───────────
-@export var knockback_strength: float = 200.0   # How hard player gets knocked back when hit
 @export var knockback_duration: float = 0.3     # How long knockback effect lasts in seconds
+# Note: Knockback force comes from the attacker (enemies/hazards), not from player settings
 
 # Note: Attack and Dash settings configured in their respective state files (scene-first design)
 
@@ -50,8 +50,16 @@ func _ready():
 	# Add player to group so enemies can find us
 	add_to_group("player")
 
-	# Components use their scene settings - no setup needed
-		# Health component auto-connects to our methods
+	# Validate Health component is properly connected
+	if health_component:
+		# Health component should auto-connect, but verify it worked
+		if not health_component.died.is_connected(_on_health_died):
+			push_warning("Player: Health component didn't auto-connect. Connecting manually.")
+			health_component.died.connect(_on_health_died)
+		if not health_component.health_changed.is_connected(_on_health_changed):
+			health_component.health_changed.connect(_on_health_changed)
+	else:
+		push_error("Player: Health component not found! Player won't be able to take damage.")
 
 	# Start in Idle mode
 	change_state(idle_state)
@@ -142,16 +150,20 @@ func play_anim(state_name: String):
 # ─────────── HEALTH SYSTEM ───────────
 func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 	"""Called when enemies or hazards damage the player"""
-	if health_component:
-		health_component.take_damage(amount)
+	if not health_component:
+		push_error("Player: No health component found!")
+		return
+	health_component.take_damage(amount)
 
 func heal(amount: int):
 	"""Restore player health (for potions, etc.)"""
-	if health_component:
-		health_component.heal(amount)
+	if not health_component:
+		push_error("Player: No health component found!")
+		return
+	health_component.heal(amount)
 
 func _on_health_died():
-	"""Handle player death"""
+	"""Handle player death - called automatically by Health component"""
 	print("Player died!")
 	# You can add death logic here:
 	# - Restart level
@@ -160,6 +172,8 @@ func _on_health_died():
 	# For now, just reset health
 	if health_component:
 		health_component.reset_health()
+	else:
+		push_error("Player: Death handler called but no health component found!")
 
 func _on_health_changed(_new_health: int, _max_health: int):
 	"""React to health changes"""

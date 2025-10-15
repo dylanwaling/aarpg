@@ -302,22 +302,10 @@ func _cleanup_hitbox():
 		_current_hitbox.queue_free()
 		_current_hitbox = null
 
-# ─────────── ATTACK RANGE UPGRADE SYSTEM ───────────
-func set_attack_range(new_range: float):
-	# Set attack range - useful for weapon upgrades or buffs
-	attack_range = new_range
-
+# ─────────── ATTACK RANGE ACCESS (FOR FUTURE UPGRADES) ───────────
 func get_attack_range() -> float:
-	"""Get current attack range"""
+	"""Get current attack range - for use by upgrade systems"""
 	return attack_range
-
-func multiply_attack_range(multiplier: float):
-	"""Multiply attack range by a factor - useful for temporary buffs"""
-	attack_range *= multiplier
-
-func add_attack_range_bonus(bonus: float):
-	"""Add flat bonus to attack range - useful for equipment/upgrades"""
-	attack_range += bonus
 
 # ─────────── ATTACK-DODGE HELPER ───────────
 func _is_retreat_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
