@@ -31,6 +31,7 @@ var _targets_hit: Array[Node] = []              # List of entities already hit (
 func _ready():
 	# Start with hitbox disabled (won't detect collisions until activated)
 	set_deferred("monitoring", false)
+	set_deferred("monitorable", true)  # Allow it to be detected/visible for debugging
 	
 	# Connect to collision detection system
 	area_entered.connect(_on_area_entered)
@@ -62,6 +63,11 @@ func _on_area_entered(area: Area2D):
 	# ─────────── TARGET TYPE VALIDATION ───────────
 	# Only damage HurtBox components (ignore walls, triggers, other Area2D nodes)
 	if not area.has_method("take_hit"):
+		return
+	
+	# ─────────── SELF-DAMAGE PREVENTION ───────────
+	# Don't let entities damage themselves (HitBox and HurtBox on same parent)
+	if area.get_parent() == get_parent():
 		return
 		
 	# ─────────── DUPLICATE HIT PREVENTION ───────────

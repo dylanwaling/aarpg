@@ -28,11 +28,9 @@ extends "res://Player/Scripts/PlayerState.gd"
 
 # ─────────── INTERNAL ATTACK STATE (DON'T MODIFY) ───────────
 var _time_left: float = 0.0                         # Countdown timer for attack duration
-var _default_hitbox_scene: PackedScene              # Cached default hitbox scene to avoid repeated preload
 var _attack_sound: AudioStream                      # Cached attack sound to avoid repeated preload
 var _locked_facing: Vector2 = Vector2.DOWN          # Direction locked when attack started  
-var _current_hitbox: Node = null                    # Active damage hitbox reference
-var _hitbox_created: bool = false                   # Whether hitbox has been created this attack
+var _hitbox_activated: bool = false                 # Whether hitbox has been activated this attack
 
 
 
@@ -58,7 +56,7 @@ func enter(_from):
 
 	# Initialize attack timing
 	_time_left = attack_duration
-	_hitbox_created = false
+	_hitbox_activated = false
 
 func _show_and_play_attack_effects():
 	# Get references to the attack effects nodes
@@ -191,7 +189,7 @@ func update(delta):
 					new_dodge_direction = Vector2.DOWN
 				
 				# Redirect existing attack hitbox to new dodge direction
-				if _current_hitbox and is_instance_valid(_current_hitbox):
+				if player.hitbox and _hitbox_activated:
 					_redirect_hitbox_to_direction(new_dodge_direction)
 			else:
 				# Normal attack movement - keep sprite locked to attack direction
@@ -253,52 +251,30 @@ func exit(_to):
 
 # ─────────── HITBOX SYSTEM METHODS ───────────
 func _setup_attack_hitbox():
-	"""Prepares the hitbox system (called when attack starts)"""
-	# Load default hitbox if none assigned in inspector
-	if not hitbox_scene:
-		if not _default_hitbox_scene:
-			_default_hitbox_scene = preload("res://GeneralNodes/Hitbox/Hitbox.tscn")
-		hitbox_scene = _default_hitbox_scene
-		if not hitbox_scene:
-			return
-	
-	# Create the hitbox with delay for attack wind-up timing
-	get_tree().create_timer(hitbox_delay).timeout.connect(_create_damage_hitbox)
-
-func _create_damage_hitbox():
-	"""Creates and activates the damage hitbox"""
-	if not hitbox_scene:
+	"""Prepare the attack's damage zone - delayed activation for wind-up"""
+	# ═══════════ VERIFY HITBOX EXISTS ═══════════
+	if not player.hitbox:
+		push_error("AttackState: Player has no hitbox! Add a HitBox node to the Player scene.")
 		return
-		
-	# Create the hitbox instance and add to player scene
-	_current_hitbox = hitbox_scene.instantiate()
-	player.add_child(_current_hitbox)
 	
-	# Position the hitbox based on attack direction
+	# Position hitbox based on attack direction IMMEDIATELY (before activation)
 	_position_hitbox_for_direction()
 	
-	# ─────────── COLLISION SYSTEM SETUP ───────────
-	# Set up what this attack hitbox can hit and what layer it belongs to
-	# 
-	# COLLISION LAYERS (what AM I?):
-	# Layer 3 = Player Attacks: 2^(3-1) = 2^2 = 4
-	# 
-	# COLLISION MASKS (what can I HIT?):
-	# Mask 12 = Enemy Hurtboxes: 2^(12-1) = 2^11 = 2048  
-	# Mask 6 = Environment Objects: 2^(6-1) = 2^5 = 32
-	# 
-	_current_hitbox.collision_layer = 4  # "I am a player attack" 
-	_current_hitbox.collision_mask = 2048 + 32  # "I can hit enemies and destructible objects"
+	# Schedule hitbox activation after wind-up delay
+	get_tree().create_timer(hitbox_delay).timeout.connect(_activate_damage_hitbox)
+
+func _activate_damage_hitbox():
+	"""Turn on damage dealing after wind-up period"""
+	if not player.hitbox or _hitbox_activated:
+		return
 	
-	# Hitbox uses its own @export damage and knockback_force values from scene
-	
-	# Wait one frame for collision system to register, then activate
-	await get_tree().process_frame
-	_current_hitbox.activate()
+	# Activate the hitbox (starts detecting collisions and dealing damage)
+	player.hitbox.activate()
+	_hitbox_activated = true
 
 func _position_hitbox_for_direction():
 	"""Position the damage area in front of the player based on which way they're attacking"""
-	if not _current_hitbox:
+	if not player.hitbox:
 		return
 		
 	# ─────────── HITBOX POSITIONING MATH ───────────
@@ -322,14 +298,13 @@ func _position_hitbox_for_direction():
 	# The player's collision shape is at their feet, but attacks come from their body/weapon
 	# So we position hitboxes relative to the sprite center instead of the collision shape
 	var sprite_center_position = player.global_position + player.sprite.position
-	_current_hitbox.global_position = sprite_center_position + hitbox_offset
+	player.hitbox.global_position = sprite_center_position + hitbox_offset
 
 func _cleanup_hitbox():
-	"""Remove the active hitbox when attack ends"""
-	if _current_hitbox and is_instance_valid(_current_hitbox):
-		_current_hitbox.deactivate()
-		_current_hitbox.queue_free()
-		_current_hitbox = null
+	"""Deactivate the hitbox when attack ends"""
+	if player.hitbox:
+		player.hitbox.deactivate()
+	_hitbox_activated = false
 
 # ─────────── ATTACK RANGE ACCESS (FOR SYSTEMS INTEGRATION) ───────────
 func get_attack_range() -> float:
@@ -360,8 +335,8 @@ func _is_retreat_movement(movement_dir: Vector2, attack_dir: Vector2) -> bool:
 	return false
 
 func _redirect_hitbox_to_direction(new_direction: Vector2):
-	"""Redirect the existing attack hitbox to the new dodge direction"""
-	if not _current_hitbox or not is_instance_valid(_current_hitbox):
+	"""Reposition hitbox mid-attack when player dodge-redirects their attack"""
+	if not player.hitbox:
 		return
 	
 	# Calculate new hitbox position based on new direction
@@ -380,4 +355,4 @@ func _redirect_hitbox_to_direction(new_direction: Vector2):
 	
 	# Move existing hitbox to new position
 	var sprite_center_position = player.global_position + player.sprite.position
-	_current_hitbox.global_position = sprite_center_position + hitbox_offset
+	player.hitbox.global_position = sprite_center_position + hitbox_offset

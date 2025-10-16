@@ -33,6 +33,7 @@ var current           = null                    # Currently active state (idle/w
 @onready var anim: AnimationPlayer   = $AnimationPlayer # Controls all player animations (walk, idle, attack)
 @onready var health_component: Node2D = $Health         # The health management component
 @onready var hurtbox: Area2D         = $HurtBox        # Receives damage from enemy attacks
+@onready var hitbox: Area2D          = $HitBox         # Deals damage to enemies (activated during attacks)
 @onready var attack_fx_sprite: Sprite2D = $Sprite2D/AttackFX/AttackEffectsSprite # Attack visual effects sprite
 @onready var attack_fx_anim: AnimationPlayer = $Sprite2D/AttackFX/AttackEffectsSprite/AnimationPlayer # Attack effects animation
 @onready var attack_fx_node: Node2D  = $Sprite2D/AttackFX # Attack effects container node

@@ -229,8 +229,8 @@ _data = {
 }
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_qsqqn"]
-radius = 12.0
-height = 28.0
+radius = 15.0
+height = 46.0
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_2osmb"]
 radius = 11.0
@@ -267,7 +267,6 @@ collision_mask = 2
 script = ExtResource("3_wyclx")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitBox"]
-visible = false
 position = Vector2(0, -7)
 rotation = 1.5707964
 shape = SubResource("CapsuleShape2D_qsqqn")
