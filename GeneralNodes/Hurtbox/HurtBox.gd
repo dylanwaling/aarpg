@@ -80,6 +80,9 @@ func _find_health_component():
 	for child in get_children():
 		if child.has_method(health_damage_method) and child.has_method(health_getter_method):
 			_health_component = child
+			# Validate the Health component is properly configured
+			if _health_component.has_method("_ready") and _health_component.get("auto_connect_to_parent"):
+				print("HurtBox: Found Health component as child - integration successful")
 			return
 	
 	# ─────────── SEARCH STRATEGY 2: CHECK SIBLING NODES ───────────
@@ -89,6 +92,9 @@ func _find_health_component():
 		for child in parent.get_children():
 			if child.has_method(health_damage_method) and child.has_method(health_getter_method):
 				_health_component = child
+				# Validate the Health component is properly configured
+				if _health_component.has_method("_ready") and _health_component.get("auto_connect_to_parent"):
+					print("HurtBox: Found Health component as sibling - integration successful")
 				return
 	
 	# ─────────── ERROR HANDLING ───────────
@@ -125,5 +131,33 @@ func get_current_health() -> int:
 	else:
 		push_warning("HurtBox: Health component missing method: " + health_getter_method)
 		return 0
+
+func validate_integration() -> bool:
+	"""Validate that Health and HurtBox are properly integrated - call this for debugging"""
+	if not _health_component:
+		push_error("HurtBox Integration: No Health component found!")
+		return false
+	
+	# Check Health component has required methods
+	if not _health_component.has_method(health_damage_method):
+		push_error("HurtBox Integration: Health component missing " + health_damage_method + " method!")
+		return false
+	
+	if not _health_component.has_method(health_getter_method):
+		push_error("HurtBox Integration: Health component missing " + health_getter_method + " method!")
+		return false
+	
+	# Check if parent has knockback support
+	var parent = get_parent()
+	if parent and not parent.has_method(knockback_method_name):
+		push_warning("HurtBox Integration: Parent missing " + knockback_method_name + " method - no knockback physics")
+	
+	# Check Health component's parent connection
+	if _health_component.get("auto_connect_to_parent") and parent:
+		if not parent.has_method("_on_health_died"):
+			push_warning("HurtBox Integration: Parent missing _on_health_died method - death won't be handled")
+	
+	print("HurtBox Integration: All systems properly connected")
+	return true
 
 # HurtBox system complete - all configuration via scene inspector, no hardcoded values

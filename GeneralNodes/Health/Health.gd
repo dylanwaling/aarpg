@@ -82,6 +82,8 @@ func _auto_connect_to_parent():
 	
 	# ─────────── DAMAGE SIGNAL CONNECTION ───────────
 	# Connect to parent's damage reaction handler if it exists (and isn't already connected)
+	# Note: Player has take_damage() method, but it's called BY Health, not the other way
+	# This connection is for the damage_taken signal, not the take_damage method
 	if parent.has_method("_on_damage_taken"):
 		if not damage_taken.is_connected(parent._on_damage_taken):
 			damage_taken.connect(parent._on_damage_taken)
@@ -121,11 +123,10 @@ func take_damage(damage_amount: int):
 	# Update the visual health display to show new value
 	_update_health_display()
 	
-	# Notify parent entity about the damage for immediate reactions
-	# This allows parents to implement _on_damage_reaction() for:
-	# - Screen shake effects
-	# - Damage sound effects
-	# - Visual feedback (flashing sprites, damage numbers)
+	# Notify parent entity about damage for immediate reactions
+	# This allows parents to implement take_damage() for:
+	# - Screen shake effects, damage sound effects
+	# - Visual feedback (flashing sprites, damage numbers)  
 	# - Gameplay reactions (interrupt animations, etc.)
 	notify_parent_of_damage(damage_amount)
 	
@@ -233,3 +234,35 @@ func notify_parent_of_damage(amount: int):
 	if parent and parent.has_method(parent_damage_method):
 		# Allow parent to react to damage (screen shake, damage sounds, etc.)
 		parent.call(parent_damage_method, amount)
+
+func validate_parent_integration() -> bool:
+	"""Validate that Health component is properly integrated with its parent entity"""
+	var parent = get_parent()
+	if not parent:
+		push_error("Health: No parent entity found!")
+		return false
+	
+	# Check parent has required death handler
+	if auto_connect_to_parent and not parent.has_method("_on_health_died"):
+		push_warning("Health: Parent missing _on_health_died() method - death won't be handled properly")
+	
+	# Check parent has optional damage reaction handler  
+	if parent_damage_method and not parent.has_method(parent_damage_method):
+		push_warning("Health: Parent missing " + parent_damage_method + "() method - no damage reactions")
+	
+	# Check if there's a HurtBox that should be finding this Health component
+	var hurtbox_found = false
+	for child in parent.get_children():
+		if child.get_script() and child.has_method("get_health_component"):
+			if child.get_health_component() == self:
+				hurtbox_found = true
+				print("Health: Successfully integrated with HurtBox component")
+				break
+	
+	if not hurtbox_found:
+		push_warning("Health: No HurtBox component found that references this Health - entity may not take damage")
+	
+	print("Health: Parent integration validation complete")
+	return true
+
+# Health system complete - all configuration via scene inspector, no hardcoded values

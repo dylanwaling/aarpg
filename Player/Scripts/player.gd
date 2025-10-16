@@ -73,6 +73,24 @@ func _ready():
 		# HurtBox should auto-find Health component, but verify it worked
 		if not hurtbox.get_health_component():
 			push_error("Player: HurtBox couldn't find Health component! Player won't take damage from attacks.")
+		else:
+			# Run comprehensive integration validation
+			if hurtbox.has_method("validate_integration"):
+				if hurtbox.validate_integration():
+					print("Player: Health-HurtBox integration validated successfully")
+				else:
+					push_error("Player: Health-HurtBox integration validation failed!")
+			
+			# Check if Health and HurtBox are using compatible settings
+			var health_comp = hurtbox.get_health_component()
+			if health_comp and health_comp.get("auto_connect_to_parent"):
+				print("Player: Health component will auto-connect signals to Player")
+			
+			# Verify HurtBox can deliver damage to Health
+			if hurtbox.get("health_damage_method") and health_comp.has_method(hurtbox.get("health_damage_method")):
+				print("Player: HurtBox-Health damage delivery confirmed")
+			else:
+				push_warning("Player: HurtBox may not be able to deliver damage to Health component")
 	else:
 		push_error("Player: HurtBox not found! Player won't be able to receive damage from enemy attacks.")
 
