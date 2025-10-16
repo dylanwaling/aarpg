@@ -21,10 +21,9 @@ extends Area2D
 @export var knockback_multiplier: float = 1.0        # Modify incoming knockback force (1.0 = normal, 0.5 = half, 2.0 = double)
 
 # ─────────── INTEGRATION SETTINGS (SCENE-FIRST) ───────────
-@export var knockback_method_name: String = "apply_knockback"  # Method name to call on parent for knockback
 @export var environment_group_name: String = "environment"     # Group name for entities that don't receive knockback
-@export var health_damage_method: String = "take_damage"       # Method name to call on Health component
-@export var health_getter_method: String = "get_health"        # Method name to get health from Health component
+# Direct method calls used for optimal performance (apply_knockback)
+# Direct method calls used for optimal performance (take_damage, get_health)
 
 # ─────────── INTERNAL COMPONENT STATE (DON'T MODIFY) ───────────
 var _health_component: Node = null                 # Reference to the Health component we forward damage to
@@ -58,31 +57,28 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 	# Start immunity period to prevent damage spam
 	_damage_immunity_timer = damage_immunity_duration
 	
-	# Forward damage to the Health component using configurable method name
-	_health_component.call(health_damage_method, damage_amount)
+	# Forward damage to the Health component (optimized direct call)
+	_health_component.take_damage(damage_amount)
 	
 	# ─────────── KNOCKBACK PHYSICS ───────────
 	# Apply knockback to parent entity (if it supports knockback and isn't in environment group)
 	var parent = get_parent()
-	if parent and parent.has_method(knockback_method_name) and knockback_force > 0 and not parent.is_in_group(environment_group_name):
+	if parent and parent.has_method("apply_knockback") and knockback_force > 0 and not parent.is_in_group(environment_group_name):
 		# Calculate knockback direction: FROM attacker TO victim (pushes away)
 		var direction = (global_position - source_position).normalized()
 		# Apply multiplier for different entity types (heavy enemies = less knockback)
 		var final_knockback_force = knockback_force * knockback_multiplier
 		var knockback_vector = direction * final_knockback_force
-		# Send knockback to parent (Player, Enemy, etc.) using configurable method name
-		parent.call(knockback_method_name, knockback_vector)
+		# Send knockback to parent (Player, Enemy, etc.)
+		parent.apply_knockback(knockback_vector)
 
 func _find_health_component():
 	"""Automatically locate the Health component this HurtBox should work with"""
 	# ─────────── SEARCH STRATEGY 1: CHECK HURTBOX CHILDREN ───────────
-	# Look for Health component as child of this HurtBox (using configurable method names)
+	# Look for Health component as child of this HurtBox
 	for child in get_children():
-		if child.has_method(health_damage_method) and child.has_method(health_getter_method):
+		if child.has_method("take_damage") and child.has_method("get_health"):
 			_health_component = child
-			# Validate the Health component is properly configured
-			if _health_component.has_method("_ready") and _health_component.get("auto_connect_to_parent"):
-				print("HurtBox: Found Health component as child - integration successful")
 			return
 	
 	# ─────────── SEARCH STRATEGY 2: CHECK SIBLING NODES ───────────
@@ -90,11 +86,8 @@ func _find_health_component():
 	var parent = get_parent()
 	if parent:
 		for child in parent.get_children():
-			if child.has_method(health_damage_method) and child.has_method(health_getter_method):
+			if child.has_method("take_damage") and child.has_method("get_health"):
 				_health_component = child
-				# Validate the Health component is properly configured
-				if _health_component.has_method("_ready") and _health_component.get("auto_connect_to_parent"):
-					print("HurtBox: Found Health component as sibling - integration successful")
 				return
 	
 	# ─────────── ERROR HANDLING ───────────
@@ -126,10 +119,10 @@ func get_current_health() -> int:
 		push_warning("HurtBox: No health component found when getting health")
 		return 0
 	
-	if _health_component.has_method(health_getter_method):
-		return _health_component.call(health_getter_method)
+	if _health_component.has_method("get_health"):
+		return _health_component.get_health()
 	else:
-		push_warning("HurtBox: Health component missing method: " + health_getter_method)
+		push_warning("HurtBox: Health component missing get_health() method")
 		return 0
 
 func validate_integration() -> bool:
@@ -139,18 +132,18 @@ func validate_integration() -> bool:
 		return false
 	
 	# Check Health component has required methods
-	if not _health_component.has_method(health_damage_method):
-		push_error("HurtBox Integration: Health component missing " + health_damage_method + " method!")
+	if not _health_component.has_method("take_damage"):
+		push_error("HurtBox Integration: Health component missing take_damage() method!")
 		return false
 	
-	if not _health_component.has_method(health_getter_method):
-		push_error("HurtBox Integration: Health component missing " + health_getter_method + " method!")
+	if not _health_component.has_method("get_health"):
+		push_error("HurtBox Integration: Health component missing get_health() method!")
 		return false
 	
 	# Check if parent has knockback support
 	var parent = get_parent()
-	if parent and not parent.has_method(knockback_method_name):
-		push_warning("HurtBox Integration: Parent missing " + knockback_method_name + " method - no knockback physics")
+	if parent and not parent.has_method("apply_knockback"):
+		push_warning("HurtBox Integration: Parent missing apply_knockback() method - no knockback physics")
 	
 	# Check Health component's parent connection
 	if _health_component.get("auto_connect_to_parent") and parent:

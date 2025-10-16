@@ -21,7 +21,6 @@ extends Node2D
 @export var show_health_display: bool = true         # Show red health number above entity
 @export var override_editor_styling: bool = false    # Apply script styling over scene editor styling
 @export var auto_connect_to_parent: bool = true      # Auto-wire signals to parent methods
-@export var parent_damage_method: String = "_on_damage_reaction"  # Parent method to call for immediate damage reactions
 
 # ─────────── VISUAL STYLING SETTINGS (SCENE-FIRST) ───────────
 @export var normal_health_color: Color = Color.RED   # Color for normal health display
@@ -123,13 +122,6 @@ func take_damage(damage_amount: int):
 	# Update the visual health display to show new value
 	_update_health_display()
 	
-	# Notify parent entity about damage for immediate reactions
-	# This allows parents to implement take_damage() for:
-	# - Screen shake effects, damage sound effects
-	# - Visual feedback (flashing sprites, damage numbers)  
-	# - Gameplay reactions (interrupt animations, etc.)
-	notify_parent_of_damage(damage_amount)
-	
 	# Check if this damage was fatal
 	if current_health <= 0:
 		die()  # Trigger death sequence
@@ -228,12 +220,7 @@ func _update_health_display():
 	else:
 		health_label.add_theme_color_override("font_color", normal_health_color)  # Normal color
 
-func notify_parent_of_damage(amount: int):
-	"""Notify parent entity about damage taken - called by take_damage for parent reactions"""
-	var parent = get_parent()
-	if parent and parent.has_method(parent_damage_method):
-		# Allow parent to react to damage (screen shake, damage sounds, etc.)
-		parent.call(parent_damage_method, amount)
+
 
 func validate_parent_integration() -> bool:
 	"""Validate that Health component is properly integrated with its parent entity"""
@@ -246,9 +233,7 @@ func validate_parent_integration() -> bool:
 	if auto_connect_to_parent and not parent.has_method("_on_health_died"):
 		push_warning("Health: Parent missing _on_health_died() method - death won't be handled properly")
 	
-	# Check parent has optional damage reaction handler  
-	if parent_damage_method and not parent.has_method(parent_damage_method):
-		push_warning("Health: Parent missing " + parent_damage_method + "() method - no damage reactions")
+	# Parent damage reactions handled through signals, not direct method calls
 	
 	# Check if there's a HurtBox that should be finding this Health component
 	var hurtbox_found = false

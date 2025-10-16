@@ -87,10 +87,10 @@ func _ready():
 				print("Player: Health component will auto-connect signals to Player")
 			
 			# Verify HurtBox can deliver damage to Health
-			if hurtbox.get("health_damage_method") and health_comp.has_method(hurtbox.get("health_damage_method")):
+			if health_comp.has_method("take_damage"):
 				print("Player: HurtBox-Health damage delivery confirmed")
 			else:
-				push_warning("Player: HurtBox may not be able to deliver damage to Health component")
+				push_warning("Player: Health component missing take_damage() method")
 	else:
 		push_error("Player: HurtBox not found! Player won't be able to receive damage from enemy attacks.")
 
