@@ -36,6 +36,7 @@ var is_broken: bool = false  # True when plant is broken and waiting to respawn
 @onready var sprite: Sprite2D = $Sprite2D  # Plant's visual image
 @onready var hurtbox: Area2D = $HurtBox  # Receives damage from attacks
 @onready var static_body: StaticBody2D = $StaticBody2D  # Blocks player movement
+@onready var health_component: Node2D = $Health  # Health management component
 
 # ─────────── INITIALIZATION ───────────
 
@@ -44,20 +45,27 @@ func _ready():
     add_to_group("environment")
     
     # Check required nodes exist
-    if not sprite or not hurtbox or not static_body:
-        push_error("Plant missing required child nodes: Sprite2D, HurtBox, or StaticBody2D")
+    if not sprite or not hurtbox or not static_body or not health_component:
+        push_error("Plant missing required child nodes: Sprite2D, HurtBox, StaticBody2D, or Health")
         return
 
 # ─────────── INTERNAL STATE MANAGEMENT ───────────
 
 func _set_plant_active(active: bool):
+    # ─────────── VISUAL STATE CONTROL ───────────
     # Turn plant ON/OFF: visible + collidable when active, hidden + passable when inactive
-    
     sprite.visible = active  # Show/hide plant image
     
+    # ─────────── HEALTH DISPLAY CONTROL ───────────
+    # Hide health display when plant is broken, show when alive
+    if health_component:
+        health_component.visible = active  # Hide/show entire health component
+    
+    # ─────────── DAMAGE SYSTEM CONTROL ───────────
     # Enable/disable damage receiving (safe deferred call)
     hurtbox.set_deferred("process_mode", Node.PROCESS_MODE_DISABLED if not active else Node.PROCESS_MODE_INHERIT)
     
+    # ─────────── COLLISION CONTROL ───────────
     # Enable/disable collision blocking (safe deferred call)
     static_body.set_deferred("process_mode", Node.PROCESS_MODE_DISABLED if not active else Node.PROCESS_MODE_INHERIT)
 
@@ -79,19 +87,23 @@ func break_plant():
 # ─────────── PLANT RESPAWN SYSTEM ───────────
 
 func respawn_plant():
+    # ─────────── PLANT REVIVAL SYSTEM ───────────
     # Bring broken plant back to life with full health
     
     is_broken = false  # Mark as alive
     _set_plant_active(true)  # Show and enable collision
     
-    # Reset health to maximum
-    var health_component = get_node_or_null("Health")
+    # ─────────── HEALTH RESTORATION ───────────
+    # Reset health to maximum (using the cached health_component reference)
     if health_component and health_component.has_method("reset_health"):
         health_component.reset_health()
+    else:
+        push_warning("Plant: Health component not found or missing reset_health() method")
 
 # ─────────── HEALTH SYSTEM INTEGRATION ───────────
 
 func _on_health_died():
+    # ─────────── AUTOMATIC DEATH HANDLER ───────────
     # Called automatically by Health component when health reaches 0
     # Health component auto-connects to this method by name
     break_plant()
