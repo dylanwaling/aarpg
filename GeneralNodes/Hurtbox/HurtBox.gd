@@ -17,8 +17,14 @@ class_name HurtBox
 extends Area2D
 
 # ─────────── DAMAGE PROTECTION SETTINGS YOU CAN TWEAK ───────────
-@export var damage_immunity_duration: float = 0.5  # Immunity period after taking damage (prevents spam)
-@export var knockback_multiplier: float = 1.0       # Modify incoming knockback force (1.0 = normal, 0.5 = half, 2.0 = double)
+@export var damage_immunity_duration: float = 0.5    # Immunity period after taking damage (prevents spam)
+@export var knockback_multiplier: float = 1.0        # Modify incoming knockback force (1.0 = normal, 0.5 = half, 2.0 = double)
+
+# ─────────── INTEGRATION SETTINGS (SCENE-FIRST) ───────────
+@export var knockback_method_name: String = "apply_knockback"  # Method name to call on parent for knockback
+@export var environment_group_name: String = "environment"     # Group name for entities that don't receive knockback
+@export var health_damage_method: String = "take_damage"       # Method name to call on Health component
+@export var health_getter_method: String = "get_health"        # Method name to get health from Health component
 
 # ─────────── INTERNAL COMPONENT STATE (DON'T MODIFY) ───────────
 var _health_component: Node = null                 # Reference to the Health component we forward damage to
@@ -52,27 +58,27 @@ func take_hit(damage_amount: int, knockback_force: float, source_position: Vecto
 	# Start immunity period to prevent damage spam
 	_damage_immunity_timer = damage_immunity_duration
 	
-	# Forward damage to the Health component (this will trigger signals, death, etc.)
-	_health_component.take_damage(damage_amount)
+	# Forward damage to the Health component using configurable method name
+	_health_component.call(health_damage_method, damage_amount)
 	
 	# ─────────── KNOCKBACK PHYSICS ───────────
-	# Apply knockback to parent entity (if it supports knockback and isn't environment)
+	# Apply knockback to parent entity (if it supports knockback and isn't in environment group)
 	var parent = get_parent()
-	if parent and parent.has_method("apply_knockback") and knockback_force > 0 and not parent.is_in_group("environment"):
+	if parent and parent.has_method(knockback_method_name) and knockback_force > 0 and not parent.is_in_group(environment_group_name):
 		# Calculate knockback direction: FROM attacker TO victim (pushes away)
 		var direction = (global_position - source_position).normalized()
 		# Apply multiplier for different entity types (heavy enemies = less knockback)
 		var final_knockback_force = knockback_force * knockback_multiplier
 		var knockback_vector = direction * final_knockback_force
-		# Send knockback to parent (Player, Enemy, etc.)
-		parent.apply_knockback(knockback_vector)
+		# Send knockback to parent (Player, Enemy, etc.) using configurable method name
+		parent.call(knockback_method_name, knockback_vector)
 
 func _find_health_component():
 	"""Automatically locate the Health component this HurtBox should work with"""
 	# ─────────── SEARCH STRATEGY 1: CHECK HURTBOX CHILDREN ───────────
-	# Look for Health component as child of this HurtBox
+	# Look for Health component as child of this HurtBox (using configurable method names)
 	for child in get_children():
-		if child.has_method("take_damage") and child.has_method("get_health"):
+		if child.has_method(health_damage_method) and child.has_method(health_getter_method):
 			_health_component = child
 			return
 	
@@ -81,7 +87,7 @@ func _find_health_component():
 	var parent = get_parent()
 	if parent:
 		for child in parent.get_children():
-			if child.has_method("take_damage") and child.has_method("get_health"):
+			if child.has_method(health_damage_method) and child.has_method(health_getter_method):
 				_health_component = child
 				return
 	
@@ -104,8 +110,8 @@ func is_alive() -> bool:
 
 func get_current_health() -> int:
 	"""Get current health points from the Health component"""
-	if _health_component and _health_component.has_method("get_health"):
-		return _health_component.get_health()
+	if _health_component and _health_component.has_method(health_getter_method):
+		return _health_component.call(health_getter_method)
 	return 0  # Return 0 if no health component
 
 # HurtBox system complete - all configuration via scene inspector, no hardcoded values

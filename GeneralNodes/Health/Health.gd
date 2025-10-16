@@ -23,6 +23,12 @@ extends Node2D
 @export var auto_connect_to_parent: bool = true      # Auto-wire signals to parent methods
 @export var parent_damage_method: String = "take_damage"  # Parent method to call when damaged
 
+# ─────────── VISUAL STYLING SETTINGS (SCENE-FIRST) ───────────
+@export var normal_health_color: Color = Color.RED   # Color for normal health display
+@export var low_health_color: Color = Color.YELLOW   # Color when health is critically low
+@export var low_health_threshold: float = 0.3        # Health percentage that triggers low health warning (0.3 = 30%)
+@export var default_font_size: int = 8               # Font size for health display (only used if override_editor_styling = true)
+
 # ─────────── INTERNAL HEALTH STATE (DON'T MODIFY) ───────────
 var current_health: int                              # Current health points remaining
 var is_dead: bool = false                           # Whether this entity has died
@@ -90,8 +96,8 @@ func _setup_health_display():
 	# Only apply styling if override_editor_styling is enabled
 	# Otherwise, completely respect what was set in the scene editor
 	if override_editor_styling:
-		health_label.add_theme_color_override("font_color", Color.RED)
-		health_label.add_theme_font_size_override("font_size", 8)
+		health_label.add_theme_color_override("font_color", normal_health_color)
+		health_label.add_theme_font_size_override("font_size", default_font_size)
 	
 	# Show or hide based on setting
 	health_label.visible = show_health_display
@@ -202,11 +208,11 @@ func _update_health_display():
 		health_bar.value = percentage
 	
 	# ─────────── VISUAL WARNING SYSTEM ───────────
-	# Change color when health is critically low
-	if current_health <= max_health * 0.3:  # 30% health or less = danger zone
-		health_label.add_theme_color_override("font_color", Color.YELLOW)  # Warning color
+	# Change color when health is critically low (threshold configurable in inspector)
+	if current_health <= max_health * low_health_threshold:
+		health_label.add_theme_color_override("font_color", low_health_color)  # Warning color
 	else:
-		health_label.add_theme_color_override("font_color", Color.RED)     # Normal color
+		health_label.add_theme_color_override("font_color", normal_health_color)  # Normal color
 
 func configure_from_editor():
 	"""Call this to refresh settings when changed in editor"""
