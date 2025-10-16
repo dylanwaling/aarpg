@@ -38,44 +38,50 @@ func _ready():
 # ─────────── HITBOX CONTROL INTERFACE ───────────
 func activate():
 	"""Turn on damage dealing - called by AttackState during wind-up completion"""
-	_is_active = true                # Enable damage processing
-	_targets_hit.clear()             # Reset hit list (allows hitting same targets again)
-	monitoring = true                # Enable collision detection
+	# ─────────── DAMAGE SYSTEM ACTIVATION ───────────
+	_is_active = true                # Allow this hitbox to deal damage
+	_targets_hit.clear()             # Clear previous hit list (fresh attack)
+	monitoring = true                # Start detecting collisions with other entities
 	# Called by: Player AttackState._create_damage_hitbox(), Enemy AttackState._activate_attack_hitbox()
 
 func deactivate():
 	"""Turn off damage dealing - called by AttackState when attack ends or exits"""
-	_is_active = false              # Disable damage processing
-	monitoring = false              # Disable collision detection
+	# ─────────── DAMAGE SYSTEM DEACTIVATION ───────────
+	_is_active = false              # Stop dealing damage
+	monitoring = false              # Stop detecting collisions (performance)
 	# Called by: Player AttackState._cleanup_hitbox(), Enemy AttackState._deactivate_attack_hitbox()"
 
 # ─────────── COLLISION DETECTION AND DAMAGE DEALING ───────────
 func _on_area_entered(area: Area2D):
 	"""Handle collision with another Area2D - check if it's a valid damage target"""
-	# ─────────── VALIDATION CHECKS ───────────
-	# Only process collisions when hitbox is active
+	# ─────────── HITBOX ACTIVATION CHECK ───────────
+	# Only deal damage when attack is actually active (not during wind-up/cooldown)
 	if not _is_active:
 		return
 		
-	# Only damage HurtBox components (ignore other Area2D nodes)
+	# ─────────── TARGET TYPE VALIDATION ───────────
+	# Only damage HurtBox components (ignore walls, triggers, other Area2D nodes)
 	if not area.has_method("take_hit"):
 		return
 		
-	# ─────────── PREVENT DOUBLE-HITTING ───────────
+	# ─────────── DUPLICATE HIT PREVENTION ───────────
 	# Get the entity that owns this HurtBox (Player, Enemy, Plant, etc.)
 	var target_owner = area.get_parent()
+	# Don't hit the same entity multiple times in one attack
 	if target_owner in _targets_hit:
-		return  # Already hit this target - don't hit again
+		return  # Already damaged this target
 	
-	# ─────────── DAMAGE DELIVERY SYSTEM ───────────
-	# Calculate source position for knockback direction (FROM attacker TO victim)
-	# Use parent's position (Player/Enemy center) rather than hitbox position for accuracy
+	# ─────────── KNOCKBACK POSITION CALCULATION ───────────
+	# Get attacker's center position for accurate knockback direction
+	# Use parent (Player/Enemy) position, not hitbox position for better physics
 	var source_pos = get_parent().global_position if get_parent() else global_position
 	
-	# Send damage to the HurtBox (optimized direct call)
+	# ─────────── DAMAGE DELIVERY ───────────
+	# Send damage, knockback force, and attacker position to victim's HurtBox
 	area.take_hit(damage, knockback_force, source_pos)
 	
-	# Remember that we hit this target (prevents hitting same entity multiple times)
+	# ─────────── HIT TRACKING ───────────
+	# Remember we hit this entity to prevent multiple hits from same attack
 	_targets_hit.append(target_owner)
 	
 	# NOTE: We don't auto-deactivate here - let the attack system control timing

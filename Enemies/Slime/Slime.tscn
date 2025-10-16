@@ -301,3 +301,4 @@ script = ExtResource("8_dkpye")
 
 [node name="Health" parent="." instance=ExtResource("9_3of0s")]
 position = Vector2(0, 12)
+normal_health_color = Color(0, 0.9567253, 0.8429402, 1)

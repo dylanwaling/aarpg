@@ -23,8 +23,8 @@ extends Node2D
 @export var auto_connect_to_parent: bool = true      # Auto-wire signals to parent methods
 
 # ─────────── VISUAL STYLING SETTINGS (SCENE-FIRST) ───────────
-@export var normal_health_color: Color = Color.RED   # Color for normal health display
-@export var low_health_color: Color = Color.YELLOW   # Color when health is critically low
+@export var normal_health_color: Color = Color.GREEN   # Color for normal health display
+@export var low_health_color: Color = Color.RED   # Color when health is critically low
 @export var low_health_threshold: float = 0.3        # Health percentage that triggers low health warning (0.3 = 30%)
 @export var default_font_size: int = 8               # Font size for health display (only used if override_editor_styling = true)
 
@@ -58,100 +58,126 @@ func _ready():
 
 func _auto_connect_to_parent():
 	"""Automatically wire health signals to parent methods - prevents manual connection errors"""
+	# ─────────── PARENT ENTITY CHECK ───────────
+	# Must have parent entity (Player, Enemy, Plant, etc.) to connect signals
 	var parent = get_parent()
 	if not parent:
 		push_warning("Health: No parent found for auto-connection")
 		return
 	
-	# ─────────── DEATH SIGNAL CONNECTION ───────────
-	# Connect to parent's death handler if it exists (and isn't already connected)
+	# ─────────── DEATH SIGNAL AUTO-WIRING ───────────
+	# If parent has _on_health_died() method, automatically connect death signal
 	if parent.has_method("_on_health_died"):
+		# Only connect if not already connected (prevents duplicate connections)
 		if not died.is_connected(parent._on_health_died):
 			died.connect(parent._on_health_died)
 		else:
 			push_warning("Health: _on_health_died already connected to parent")
 	
-	# ─────────── HEALTH CHANGE SIGNAL CONNECTION ───────────
-	# Connect to parent's health change handler if it exists (and isn't already connected)
+	# ─────────── HEALTH CHANGE SIGNAL AUTO-WIRING ───────────
+	# If parent has _on_health_changed() method, automatically connect health updates
 	if parent.has_method("_on_health_changed"):
+		# Only connect if not already connected (prevents duplicate connections)
 		if not health_changed.is_connected(parent._on_health_changed):
 			health_changed.connect(parent._on_health_changed)
 		else:
 			push_warning("Health: _on_health_changed already connected to parent")
 	
-	# ─────────── DAMAGE SIGNAL CONNECTION ───────────
-	# Connect to parent's damage reaction handler if it exists (and isn't already connected)
-	# Note: Player has take_damage() method, but it's called BY Health, not the other way
-	# This connection is for the damage_taken signal, not the take_damage method
+	# ─────────── DAMAGE REACTION SIGNAL AUTO-WIRING ───────────
+	# If parent has _on_damage_taken() method, automatically connect damage notifications
+	# Note: This is for immediate reactions (screen shake, sounds, effects)
+	# The actual damage processing happens through take_damage() method calls
 	if parent.has_method("_on_damage_taken"):
+		# Only connect if not already connected (prevents duplicate connections)
 		if not damage_taken.is_connected(parent._on_damage_taken):
 			damage_taken.connect(parent._on_damage_taken)
 		else:
 			push_warning("Health: _on_damage_taken already connected to parent")
 
 func _setup_health_display():
-	"""Configure the visual health display"""
+	"""Configure the visual health display - colors, fonts, visibility"""
+	# ─────────── DISPLAY COMPONENT CHECK ───────────
+	# Can't set up display without a health label component
 	if not health_label:
 		return
 		
-	# Only apply styling if override_editor_styling is enabled
-	# Otherwise, completely respect what was set in the scene editor
+	# ─────────── SCENE-FIRST STYLING SYSTEM ───────────
+	# Only override scene editor styling if explicitly requested
+	# This respects designer's visual choices in the scene editor
 	if override_editor_styling:
+		# Apply script-defined colors and fonts (overrides scene settings)
 		health_label.add_theme_color_override("font_color", normal_health_color)
 		health_label.add_theme_font_size_override("font_size", default_font_size)
 	
-	# Show or hide based on setting
+	# ─────────── VISIBILITY CONTROL ───────────
+	# Show or hide health display based on inspector setting
 	health_label.visible = show_health_display
 
 # ─────────── CORE HEALTH MANAGEMENT FUNCTIONS ───────────
 func take_damage(damage_amount: int):
 	"""Process incoming damage and handle death if health reaches zero"""
-	# Dead entities can't take more damage
+	# ─────────── DAMAGE VALIDATION ───────────
+	# Dead entities can't take more damage (prevents negative health)
 	if is_dead:
 		return
 		
-	# Apply damage and clamp to valid range (0 to max_health)
+	# ─────────── HEALTH CALCULATION ───────────
+	# Subtract damage from current health points
 	current_health -= damage_amount
-	current_health = max(0, current_health)  # Never go below 0
+	# Make sure health never goes below 0 (clamp to minimum)
+	current_health = max(0, current_health)
 	
-	# ─────────── SIGNAL BROADCASTING ───────────
-	# Notify other systems about the damage and health change
-	damage_taken.emit(damage_amount)                # "I just took X damage"
-	health_changed.emit(current_health, max_health) # "My health is now X/Y"
+	# ─────────── NOTIFICATION SYSTEM ───────────
+	# Tell other systems "I just took damage" (for effects, sounds, etc.)
+	damage_taken.emit(damage_amount)
+	# Tell other systems "My health changed" (for UI updates, AI reactions)
+	health_changed.emit(current_health, max_health)
 	
-	# Update the visual health display to show new value
+	# ─────────── VISUAL UPDATE ───────────
+	# Update the red health number displayed above the entity
 	_update_health_display()
 	
-	# Check if this damage was fatal
+	# ─────────── DEATH CHECK ───────────
+	# If health reached 0, entity dies (triggers death animations, cleanup, etc.)
 	if current_health <= 0:
-		die()  # Trigger death sequence
+		die()
 
 func heal(heal_amount: int):
 	"""Restore health points - used for potions, rest areas, etc."""
-	# Dead entities can't be healed (use reset_health() to revive)
+	# ─────────── HEALING VALIDATION ───────────
+	# Dead entities can't be healed (must use reset_health() to revive them)
 	if is_dead:
 		return
 		
-	# Apply healing and clamp to valid range (0 to max_health)
+	# ─────────── HEALTH RESTORATION ───────────
+	# Add healing points to current health
 	current_health += heal_amount
-	current_health = min(max_health, current_health)  # Never exceed maximum
+	# Make sure health never exceeds maximum (clamp to max_health)
+	current_health = min(max_health, current_health)
 	
 	# Notify systems and update display
 	health_changed.emit(current_health, max_health)
 	_update_health_display()
 
 func die():
-	"""Handle death"""
+	"""Handle entity death - called when health reaches zero"""
+	# ─────────── DEATH VALIDATION ───────────
+	# Prevent multiple death calls (already dead entities stay dead)
 	if is_dead:
 		return
 		
+	# ─────────── DEATH STATE SETUP ───────────
+	# Mark entity as dead (stops further damage, healing, etc.)
 	is_dead = true
+	# Set health to exactly 0 (ensures consistent death state)
 	current_health = 0
 	
-	# Emit death signal
+	# ─────────── DEATH NOTIFICATION ───────────
+	# Tell parent entity "I died" (triggers death animations, cleanup, respawn)
 	died.emit()
 	
-	# Update display
+	# ─────────── VISUAL DEATH UPDATE ───────────
+	# Update health display to show 0 health (usually hides or grays out)
 	_update_health_display()
 
 func reset_health():
@@ -196,25 +222,30 @@ func get_health_percentage() -> float:
 # ─────────── VISUAL DISPLAY SYSTEM ───────────
 func _update_health_display():
 	"""Update the visual health display - text and optional health bar"""
+	# ─────────── DISPLAY VALIDATION ───────────
+	# Don't update if no health label exists or display is turned off
 	if not health_label or not show_health_display:
 		return
 	
-	# ─────────── TEXT DISPLAY UPDATE ───────────
+	# ─────────── HEALTH TEXT UPDATE ───────────
+	# Show current health as red number above entity (e.g. "75", "0")
 	health_label.text = str(current_health)
 	
-	# ─────────── HEALTH BAR UPDATE (IF PRESENT) ───────────
-	# Look for optional health bar component (scene-first - only if designer added one)
+	# ─────────── HEALTH BAR UPDATE (OPTIONAL) ───────────
+	# Look for health bar component (only if designer added one in scene)
 	var health_bar = get_node_or_null("HealthBar") or get_node_or_null("../HealthBar")
 	if health_bar and health_bar.has_method("set_value"):
-		# Convert health to percentage for progress bar
+		# Convert health to percentage (0-100%) for progress bar display
 		health_bar.value = float(current_health) / float(max_health) * 100.0
 	
-	# ─────────── VISUAL WARNING SYSTEM ───────────
-	# Change color when health is critically low (threshold configurable in inspector)
+	# ─────────── LOW HEALTH WARNING COLORS ───────────
+	# Change text color when health gets dangerously low
 	if current_health <= max_health * low_health_threshold:
-		health_label.add_theme_color_override("font_color", low_health_color)  # Warning color
+		# Health is critically low - use warning color (default: yellow)
+		health_label.add_theme_color_override("font_color", low_health_color)
 	else:
-		health_label.add_theme_color_override("font_color", normal_health_color)  # Normal color
+		# Health is normal - use standard color (default: red)
+		health_label.add_theme_color_override("font_color", normal_health_color)
 
 
 
