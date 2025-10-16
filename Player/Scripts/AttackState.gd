@@ -331,9 +331,13 @@ func _cleanup_hitbox():
 		_current_hitbox.queue_free()
 		_current_hitbox = null
 
-# ─────────── ATTACK RANGE ACCESS (FOR FUTURE UPGRADES) ───────────
+# ─────────── ATTACK RANGE ACCESS (FOR SYSTEMS INTEGRATION) ───────────
 func get_attack_range() -> float:
-	"""Get current attack range - for use by upgrade systems"""
+	"""Get current attack range - used by upgrade systems, AI, and UI systems"""
+	# This function allows other systems to query current attack range:
+	# - Upgrade systems can show current vs upgraded range
+	# - Enemy AI can maintain proper distance from player attacks
+	# - UI can display attack range in tooltips or stats
 	return attack_range
 
 # ─────────── ATTACK-DODGE HELPER ───────────

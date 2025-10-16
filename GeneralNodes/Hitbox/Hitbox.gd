@@ -37,15 +37,17 @@ func _ready():
 
 # ─────────── HITBOX CONTROL INTERFACE ───────────
 func activate():
-	"""Turn on damage dealing - call this when attack/spell starts"""
+	"""Turn on damage dealing - called by AttackState during wind-up completion"""
 	_is_active = true                # Enable damage processing
 	_targets_hit.clear()             # Reset hit list (allows hitting same targets again)
 	monitoring = true                # Enable collision detection
+	# Called by: Player AttackState._create_damage_hitbox(), Enemy AttackState._activate_attack_hitbox()
 
 func deactivate():
-	"""Turn off damage dealing - call this when attack/spell ends"""
+	"""Turn off damage dealing - called by AttackState when attack ends or exits"""
 	_is_active = false              # Disable damage processing
 	monitoring = false              # Disable collision detection
+	# Called by: Player AttackState._cleanup_hitbox(), Enemy AttackState._deactivate_attack_hitbox()"
 
 # ─────────── COLLISION DETECTION AND DAMAGE DEALING ───────────
 func _on_area_entered(area: Area2D):

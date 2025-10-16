@@ -104,14 +104,26 @@ func get_health_component() -> Node:
 
 func is_alive() -> bool:
 	"""Check if the entity is still alive (has health > 0)"""
-	if _health_component and _health_component.has_method("is_alive"):
+	if not _health_component:
+		push_warning("HurtBox: No health component found when checking if alive")
+		return true  # Assume alive if no health component
+	
+	if _health_component.has_method("is_alive"):
 		return _health_component.is_alive()
-	return true  # Assume alive if no health component
+	else:
+		# Fallback: check health directly if is_alive method doesn't exist
+		return get_current_health() > 0
 
 func get_current_health() -> int:
 	"""Get current health points from the Health component"""
-	if _health_component and _health_component.has_method(health_getter_method):
+	if not _health_component:
+		push_warning("HurtBox: No health component found when getting health")
+		return 0
+	
+	if _health_component.has_method(health_getter_method):
 		return _health_component.call(health_getter_method)
-	return 0  # Return 0 if no health component
+	else:
+		push_warning("HurtBox: Health component missing method: " + health_getter_method)
+		return 0
 
 # HurtBox system complete - all configuration via scene inspector, no hardcoded values
