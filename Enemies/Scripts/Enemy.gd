@@ -105,6 +105,7 @@ func take_damage(amount: int, _hit_position: Vector2 = Vector2.ZERO):
 # Called automatically by health component when health reaches zero
 func _on_health_died():
 	is_dead = true        # Mark as dead so states stop running
+	# Health component automatically hides health display on death
 	queue_free()         # Remove enemy from scene
 
 # Called automatically by health component when health changes (unused but required)

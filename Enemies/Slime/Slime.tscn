@@ -233,8 +233,8 @@ radius = 12.0
 height = 28.0
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_2osmb"]
-radius = 7.0
-height = 18.0
+radius = 11.0
+height = 26.0
 
 [node name="Slime" type="CharacterBody2D"]
 collision_layer = 1024

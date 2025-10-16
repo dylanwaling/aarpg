@@ -172,6 +172,12 @@ func die():
 	# Set health to exactly 0 (ensures consistent death state)
 	current_health = 0
 	
+	# ─────────── HEALTH DISPLAY AUTO-HIDE ───────────
+	# Automatically hide health display when entity dies
+	# This prevents floating health numbers on dead entities
+	if health_label:
+		health_label.visible = false
+	
 	# ─────────── DEATH NOTIFICATION ───────────
 	# Tell parent entity "I died" (triggers death animations, cleanup, respawn)
 	died.emit()
@@ -181,9 +187,18 @@ func die():
 	_update_health_display()
 
 func reset_health():
-	"""Reset to full health"""
+	"""Reset to full health and restore visibility"""
+	# ─────────── HEALTH RESTORATION ───────────
 	is_dead = false
 	current_health = max_health
+	
+	# ─────────── HEALTH DISPLAY AUTO-SHOW ───────────
+	# Automatically show health display when entity is revived
+	# This ensures health numbers appear when entities respawn
+	if health_label and show_health_display:
+		health_label.visible = true
+	
+	# ─────────── REVIVAL NOTIFICATIONS ───────────
 	health_changed.emit(current_health, max_health)
 	_update_health_display()
 

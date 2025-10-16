@@ -56,11 +56,6 @@ func _set_plant_active(active: bool):
     # Turn plant ON/OFF: visible + collidable when active, hidden + passable when inactive
     sprite.visible = active  # Show/hide plant image
     
-    # ─────────── HEALTH DISPLAY CONTROL ───────────
-    # Hide health display when plant is broken, show when alive
-    if health_component:
-        health_component.visible = active  # Hide/show entire health component
-    
     # ─────────── DAMAGE SYSTEM CONTROL ───────────
     # Enable/disable damage receiving (safe deferred call)
     hurtbox.set_deferred("process_mode", Node.PROCESS_MODE_DISABLED if not active else Node.PROCESS_MODE_INHERIT)
@@ -68,6 +63,10 @@ func _set_plant_active(active: bool):
     # ─────────── COLLISION CONTROL ───────────
     # Enable/disable collision blocking (safe deferred call)
     static_body.set_deferred("process_mode", Node.PROCESS_MODE_DISABLED if not active else Node.PROCESS_MODE_INHERIT)
+    
+    # Note: Health display visibility is now handled automatically by the Health component
+    # - Health.die() automatically hides the health display
+    # - Health.reset_health() automatically shows it again
 
 # ─────────── PLANT DESTRUCTION SYSTEM ───────────
 

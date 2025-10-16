@@ -223,7 +223,7 @@ func _on_health_died():
 	# - Restart level
 	# - Show game over screen
 	# - Respawn at checkpoint
-	# For now, just reset health
+	# For now, just reset health (Health component will auto-show display)
 	if health_component:
 		health_component.reset_health()
 	else:
